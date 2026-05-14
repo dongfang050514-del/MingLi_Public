@@ -109,6 +109,39 @@ const periodPresets = [
   { value: "evening", label: "只记得晚上", hour: 20, minute: 0, confidence: "low", text: "只提供宽泛时段，时柱可能有变化，核心解读以前三柱为主。" }
 ];
 
+const concernProfiles = {
+  overview: {
+    label: "整体命盘",
+    theme: "overview",
+    line: "先从整体命盘看起，再慢慢进入财富、关系和改运。"
+  },
+  future: {
+    label: "未来运势",
+    theme: "future",
+    line: "先看未来三个月和年度主线，把趋势落成可行动的节奏。"
+  },
+  wealth: {
+    label: "财富事业",
+    theme: "wealth",
+    line: "先看适合的来财方式、事业发力点和守财提醒。"
+  },
+  relationship: {
+    label: "姻缘关系",
+    theme: "relationship",
+    line: "先看吸引力来源、相处节奏和关系里的盲区。"
+  },
+  remedy: {
+    label: "改运行动",
+    theme: "remedy",
+    line: "先看可以改变日常状态的补运方向，而不是等结果。"
+  },
+  oracle: {
+    label: "签文建议",
+    theme: "oracle",
+    line: "先收一段签文，把前面的判断压成今天能记住的一句话。"
+  }
+};
+
 const solarTerms = [
   { name: "小寒", degree: 285, month: 1, day: 6, jieBranch: 1 },
   { name: "大寒", degree: 300, month: 1, day: 20 },
@@ -151,6 +184,7 @@ const controlsMap = {
   longitude: document.querySelector("#longitude"),
   timezone: document.querySelector("#timeZone"),
   name: document.querySelector("#displayName"),
+  concern: document.querySelector("#mainConcern"),
   useTrueSolarTime: document.querySelector("#useTrueSolarTime"),
   showTermDetails: document.querySelector("#showTermDetails"),
   yearBoundary: document.querySelector("#yearBoundary"),
@@ -174,13 +208,14 @@ const cardProgressBar = document.querySelector("#cardProgressBar");
 const modeEyebrow = document.querySelector("#modeEyebrow");
 const questionTitle = document.querySelector("#questionTitle");
 const idleCardFaces = ["生", "辰", "命"];
-const basicCardFields = ["year", "month", "day", "period", "name"];
+const basicCardFields = ["year", "month", "day", "period", "name", "concern"];
 const proCardFields = [
   "year",
   "month",
   "day",
   "period",
   "name",
+  "concern",
   "hour",
   "minute",
   "city",
@@ -219,6 +254,7 @@ sampleButton.addEventListener("click", () => {
   controlsMap.city.value = "成都";
   applyCityPreset("成都");
   controlsMap.name.value = "来客";
+  controlsMap.concern.value = "future";
   controlsMap.exactTime.checked = false;
   controlsMap.useTrueSolarTime.value = "false";
   controlsMap.showTermDetails.checked = false;
@@ -281,22 +317,40 @@ function beginReading(data) {
   setReadingState(true, "命脉图成形中...");
   setCardFaces(idleCardFaces);
   resetCastSteps();
+  setupCalculationFlow(data, chart);
   document.body.classList.remove("is-reading", "has-reading", "is-zoomed");
   document.body.classList.add("is-shuffling");
   resultPanel.classList.remove("reveal");
-  document.querySelector("#plateTitle").textContent = "命脉图正在成形";
-  document.querySelector("#plateSubtitle").textContent = "卡牌信息已收束，正在依次定时、排柱、归五行。";
+  document.querySelector("#plateTitle").textContent = "命数正在入盘";
+  document.querySelector("#plateSubtitle").textContent = "出生信息会化成数据签飞入命盘，依次校时、排柱、归五行，再生成结果。";
 
-  queueReadingStep(() => setCastStep(1), 420);
-  queueReadingStep(() => setCastStep(2), 760);
-  queueReadingStep(() => document.body.classList.add("is-zoomed"), 980);
   queueReadingStep(() => {
+    setCastStep(1);
+    updateCalculationFlow(1, "出生数据正在入盘", 22);
+  }, 420);
+  queueReadingStep(() => {
+    setCastStep(2);
+    updateCalculationFlow(2, "校正时辰与节令边界", 42);
+    document.body.classList.add("is-zoomed");
+  }, 980);
+  queueReadingStep(() => {
+    updateCalculationFlow(3, "四柱正在落位", 64);
+    revealCastingPillars(chart);
     setCardFaces(chart.pillars.slice(0, 3).map((pillar) => pillar.name));
     document.body.classList.remove("is-shuffling");
     document.body.classList.add("is-reading");
-    primaryButton.textContent = "排盘中...";
     setCastStep(3);
-  }, 1120);
+  }, 1680);
+  queueReadingStep(() => {
+    updateCalculationFlow(4, "五行权重正在归集", 82);
+    revealCastingElements(chart);
+    setCastStep(4);
+  }, 2500);
+  queueReadingStep(() => {
+    updateCalculationFlow(5, "结果签文正在生成", 96);
+    document.querySelector("#centerStem").textContent = chart.dayMaster.name;
+    document.querySelector(".plate-center")?.classList.add("is-computing");
+  }, 3220);
 
   queueReadingStep(() => {
     renderChart(data, chart);
@@ -306,7 +360,7 @@ function beginReading(data) {
     setStage("result");
     setCastStep(4);
     setReadingState(false);
-  }, 2240);
+  }, 4180);
 }
 
 function setStage(stage) {
@@ -352,6 +406,97 @@ function setReadingState(isReading, loadingText = "起盘中...") {
   } else {
     syncCardFlow();
   }
+}
+
+function setupCalculationFlow(data, chart) {
+  const astrolabe = document.querySelector(".astrolabe");
+  const quickFacts = document.querySelector("#quickFacts");
+  const concern = getConcernProfile(data.concern);
+  astrolabe.querySelector(".data-flight-layer")?.remove();
+  astrolabe.querySelectorAll(".is-computing").forEach((item) => item.classList.remove("is-computing"));
+  document.querySelector("#centerStem").textContent = "--";
+  document.querySelector("#yearRing").textContent = "--";
+  document.querySelector("#monthRing").textContent = "--";
+  document.querySelector("#dayRing").textContent = "--";
+  document.querySelector("#hourRing").textContent = "--";
+
+  const tokens = [
+    { label: "年", value: `${data.year}`, x: "-118px", y: "-112px" },
+    { label: "月", value: `${data.month}月`, x: "124px", y: "-104px" },
+    { label: "日", value: `${data.day}日`, x: "130px", y: "104px" },
+    { label: "时", value: data.hasExactTime ? `${pad2(data.hour)}:${pad2(data.minute)}` : data.period.label, x: "-126px", y: "112px" },
+    { label: "名", value: data.displayName || "来客", x: "0px", y: "-150px" },
+    { label: "问", value: concern.label, x: "0px", y: "150px" }
+  ];
+  const flight = document.createElement("div");
+  flight.className = "data-flight-layer";
+  flight.setAttribute("aria-hidden", "true");
+  flight.innerHTML = tokens.map((token, index) => `
+    <span class="data-token" style="--start-x:${token.x};--start-y:${token.y};--flight-delay:${index * 130}ms">
+      <b>${token.label}</b><em>${token.value}</em>
+    </span>
+  `).join("");
+  astrolabe.append(flight);
+
+  quickFacts.innerHTML = `
+    <div class="calc-live-panel">
+      <div class="calc-live-head">
+        <span>实时推演</span>
+        <strong id="calcFlowStatus">等待数据入盘</strong>
+      </div>
+      <div class="calc-progress" aria-hidden="true"><span id="calcProgressBar" style="width:8%"></span></div>
+      <div class="calc-log">
+        <p data-flow-step="1"><b>01</b><span>出生年月日时化为命数签</span></p>
+        <p data-flow-step="2"><b>02</b><span>校正时辰、节令与换日口径</span></p>
+        <p data-flow-step="3"><b>03</b><span>年柱、月柱、日柱、时柱依次落位</span></p>
+        <p data-flow-step="4"><b>04</b><span>五行权重归集，判断日主强弱</span></p>
+        <p data-flow-step="5"><b>05</b><span>生成财富、姻缘、运势与改运签</span></p>
+      </div>
+      <div class="element-scan" aria-label="五行权重预览">
+        ${elementOrder.map((element) => `
+          <span style="--scan-width:${chart.normalized[element]}%;--scan-color:${elementColors[element]}">
+            <b>${element}</b><i></i><em>${chart.normalized[element]}%</em>
+          </span>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function updateCalculationFlow(step, status, progress) {
+  const statusEl = document.querySelector("#calcFlowStatus");
+  const progressEl = document.querySelector("#calcProgressBar");
+  if (statusEl) statusEl.textContent = status;
+  if (progressEl) progressEl.style.width = `${progress}%`;
+  document.querySelectorAll("[data-flow-step]").forEach((item) => {
+    const itemStep = Number(item.dataset.flowStep);
+    item.classList.toggle("done", itemStep < step);
+    item.classList.toggle("active", itemStep === step);
+  });
+  document.querySelector(".calc-live-panel")?.classList.toggle("show-elements", step >= 4);
+}
+
+function revealCastingPillars(chart) {
+  [
+    ["#yearRing", chart.pillars[0].name],
+    ["#monthRing", chart.pillars[1].name],
+    ["#dayRing", chart.pillars[2].name],
+    ["#hourRing", chart.pillars[3].name]
+  ].forEach(([selector, value], index) => {
+    const ring = document.querySelector(selector);
+    ring.textContent = value;
+    ring.closest(".ring-item")?.style.setProperty("--compute-delay", `${index * 130}ms`);
+    ring.closest(".ring-item")?.classList.add("is-computing");
+  });
+}
+
+function revealCastingElements(chart) {
+  document.querySelector("#centerStem").textContent = chart.dayMaster.name;
+  document.querySelector(".plate-center")?.classList.add("is-computing");
+  document.querySelectorAll(".element-scan span").forEach((item, index) => {
+    item.style.setProperty("--scan-delay", `${index * 90}ms`);
+    item.classList.add("is-active");
+  });
 }
 
 function setCardFaces(values) {
@@ -456,6 +601,7 @@ function getCardControl(field) {
     day: controlsMap.day,
     period: controlsMap.period,
     name: controlsMap.name,
+    concern: controlsMap.concern,
     hour: controlsMap.hour,
     minute: controlsMap.minute,
     city: controlsMap.city,
@@ -546,6 +692,7 @@ function readForm() {
     longitude: Number(controlsMap.longitude.value || 116.4074),
     timezone: Number(controlsMap.timezone.value || 8),
     displayName: controlsMap.name.value.trim(),
+    concern: controlsMap.concern.value || "overview",
     useTrueSolarTime: controlsMap.useTrueSolarTime.value === "true",
     showTermDetails: controlsMap.showTermDetails.checked,
     yearBoundary: controlsMap.yearBoundary.value,
@@ -948,6 +1095,7 @@ function renderChart(data, chart) {
   const wealthTexts = buildWealthInsights(chart, dayProfile, dominantProfile, usefulText);
   const relationshipTexts = buildRelationshipInsights(chart, dayProfile, usefulText);
   const remedyTexts = buildRemedyInsights(chart, usefulText);
+  const concern = getConcernProfile(data.concern);
 
   document.querySelector("#plateTitle").textContent = `${titleName}的 MingLi 命盘`;
   document.querySelector("#plateSubtitle").textContent = `${dateText}，校正后为 ${solarTimeText}。`;
@@ -989,19 +1137,26 @@ function renderChart(data, chart) {
           <h4>时间可信度</h4>
           <p>${data.hasExactTime ? "已使用具体出生时刻，四柱结果更完整。" : "按你提供的大概时段起盘，前三柱稳定，时柱作为趋势参考。"}</p>
         </article>
+        <article class="insight">
+          <h4>本次重点</h4>
+          <p>你选择先看${concern.label}。${concern.line}</p>
+        </article>
       </div>
     </div>
 
     <div class="section">
       <h3>四柱八字</h3>
       <div class="pillars">
-        ${chart.pillars.map((pillar) => `
+        ${chart.pillars.map((pillar) => {
+          const meaning = pillarMeaning(pillar.key, data);
+          return `
           <article class="pillar">
-            <span class="pillar-label">${pillar.label}</span>
+            <span class="pillar-label">${pillar.label} · ${meaning.short}</span>
             <strong class="pillar-name">${pillar.name}</strong>
-            <p class="pillar-meta">${pillar.stem.yinYang}${pillar.stem.element} · ${pillar.branch.yinYang}${pillar.branch.element}<br>藏干：${pillar.branch.hidden.join("、")}</p>
+            <p class="pillar-meta">${meaning.symbol}<br>${meaning.detail}</p>
           </article>
-        `).join("")}
+        `;
+        }).join("")}
       </div>
     </div>
 
@@ -1190,7 +1345,7 @@ function renderChart(data, chart) {
     confidenceLabel,
     hourNote
   });
-  setupResultDeck();
+  setupResultDeck(data.concern);
 }
 
 function enhanceReadableResultSections(context) {
@@ -1221,15 +1376,15 @@ function enhanceReadableResultSections(context) {
       points: [
         `你的命盘核心是${chart.dayMaster.name}${chart.dayMaster.element}日主，整体属于${chart.strength.label}。简单说，这代表你做事的底层能量和当前需要的节奏。`,
         `${strongestElement}气最明显，容易成为你的惯性优势；${weakestElement}气较弱，往往是需要刻意补上的能力或环境。`,
-        `这份报告后面会把它拆成财富、关系、未来运势和改运行动，不需要懂术语，按建议落到日常就能用。`
+        `这份报告只看趋势和象意，不替你做决定；后面会拆成财富、关系、未来运势和改运行动，按建议落到日常就能用。`
       ]
     },
     {
-      summary: "四柱怎么读",
+      summary: "四柱代表什么",
       points: [
-        "年柱更像早年环境、家族气质和外界给你的底色；月柱看成长阶段、事业土壤和做事节奏。",
-        "日柱是这张盘的中心，重点看日主，也就是你最核心的性格能量；时柱更像后续发展、长期目标和晚一点才显出来的潜力。",
-        "四柱不是给你贴标签，而是帮你看清：哪些能力用起来顺手，哪些地方容易消耗，哪些选择更值得长期经营。"
+        "年柱像你的外缘底色：早年环境、家族气质，以及别人初接触你时感受到的风格。",
+        "月柱像你的成长土壤：做事节奏、事业习惯、资源从哪里来；日柱代表你自己，是性格和选择的核心。",
+        "时柱看后劲和愿望：未来想经营什么、长期潜力在哪里。时间不准时，它只作为趋势参考。"
       ]
     },
     {
@@ -1330,7 +1485,37 @@ function elementMeaning(element) {
   }[element] || "调整节奏";
 }
 
-function setupResultDeck() {
+function pillarMeaning(key, data) {
+  const meanings = {
+    year: {
+      short: "外缘底色",
+      symbol: "象征你的早年环境、家族气质和外界第一眼感受到的风格。",
+      detail: "它不是决定命运的标签，更像人生开场时带来的背景音。"
+    },
+    month: {
+      short: "成长土壤",
+      symbol: "象征你形成习惯的环境、事业土壤和做事节奏。",
+      detail: "看它是为了知道你在哪类环境里更容易被滋养、被看见。"
+    },
+    day: {
+      short: "自我核心",
+      symbol: "象征你自己：性格底层、选择方式，以及亲密关系里的真实状态。",
+      detail: "这一柱是整张盘的中心，后面的财富、关系和改运都围绕它展开。"
+    },
+    hour: {
+      short: "后劲愿望",
+      symbol: "象征长期潜力、未来愿望、子女缘分和晚一点才显出来的能力。",
+      detail: data.hasExactTime ? "出生时刻越准确，这一柱越适合看长期规划。" : "你提供的是大概时段，所以这一柱先当作趋势参考。"
+    }
+  };
+  return meanings[key] || meanings.day;
+}
+
+function getConcernProfile(concern) {
+  return concernProfiles[concern] || concernProfiles.overview;
+}
+
+function setupResultDeck(preferredConcern = "overview") {
   const sections = [...resultPanel.querySelectorAll(".section")];
   if (!sections.length) return;
   clearResultRevealTimers();
@@ -1348,7 +1533,7 @@ function setupResultDeck() {
     </div>
     <div class="result-deck-head">
       <div>
-        <p class="eyebrow">北斗开卷</p>
+        <p class="eyebrow">本地命签 · 仅作参考</p>
         <h3 id="resultPageTitle">${sections[0].querySelector("h3")?.textContent || "结果"}</h3>
       </div>
       <span class="badge" id="resultPageCount">1 / ${sections.length}</span>
@@ -1356,7 +1541,7 @@ function setupResultDeck() {
     <div class="constellation-stage" aria-label="北斗星轨">
       <div class="constellation-copy">
         <span>MingLi 命理报告</span>
-        <strong id="resultCurrentTitle">逐星展开你的命盘脉络</strong>
+        <strong id="resultCurrentTitle">点亮一枚星签，再看对应信息</strong>
         <em>四柱 · 五行 · 运势 · 财富 · 姻缘 · 改运</em>
       </div>
       <svg class="constellation-lines" viewBox="0 0 100 58" aria-hidden="true">
@@ -1368,20 +1553,28 @@ function setupResultDeck() {
       <div class="star-field" aria-label="北斗星点"></div>
       <span class="star-sweep" aria-hidden="true"></span>
     </div>
-    <div class="result-page-frame" aria-label="命理分析单页"></div>
-    <div class="swipe-hint" aria-hidden="true">
-      <span>左右滑动翻页</span>
-      <i></i>
+    <div class="result-stage result-ritual-stage" aria-label="命理分析场景">
+      <span class="ritual-aura" aria-hidden="true"></span>
+      <span class="ritual-rail rail-top" aria-hidden="true"></span>
+      <span class="ritual-rail rail-bottom" aria-hidden="true"></span>
+      <span class="ritual-corner corner-a" aria-hidden="true"></span>
+      <span class="ritual-corner corner-b" aria-hidden="true"></span>
     </div>
-    <div class="result-nav">
-      <button class="btn secondary result-page-button" type="button" id="prevResult" aria-label="上一页"><span aria-hidden="true">‹</span></button>
-      <div class="result-dots" aria-label="结果页码"></div>
-      <button class="btn primary result-page-button" type="button" id="nextResult" aria-label="下一页"><span aria-hidden="true">›</span></button>
+    <div class="result-gate-nav" aria-label="切换结果签">
+      <button class="result-gate gate-prev" type="button" data-report-nav="prev" aria-label="上一签">
+        <span>上一签</span>
+      </button>
+      <div class="result-gate-center">
+        <strong id="resultNavTitle">${sections[0].querySelector("h3")?.textContent || "结果"}</strong>
+        <em id="resultNavHint">左滑看下一签</em>
+      </div>
+      <button class="result-gate gate-next" type="button" data-report-nav="next" aria-label="下一签">
+        <span>下一签</span>
+      </button>
     </div>
   `;
 
-  const pageFrameEl = deck.querySelector(".result-page-frame");
-  const dotsEl = deck.querySelector(".result-dots");
+  const pageFrameEl = deck.querySelector(".result-stage");
   const starFieldEl = deck.querySelector(".star-field");
   starPoints.forEach((point, index) => {
     const star = document.createElement("button");
@@ -1411,54 +1604,19 @@ function setupResultDeck() {
     section.dataset.reportIndex = String(index + 1).padStart(2, "0");
     section.insertAdjacentHTML("afterbegin", `${buildReportScene(theme)}${buildReportMotif(theme)}`);
     section.insertAdjacentHTML("beforeend", buildReportFooter(theme));
+    wrapReportContent(section);
     pageFrameEl.append(section);
-
-    const dot = document.createElement("button");
-    dot.className = "result-dot";
-    dot.type = "button";
-    dot.setAttribute("aria-label", `查看第 ${index + 1} 页`);
-    dot.addEventListener("click", () => setReportPage(deck, index, true));
-    dotsEl.append(dot);
   });
 
-  resultPanel.replaceChildren(deck);
-  deck.querySelector("#prevResult").addEventListener("click", () => setReportPage(deck, getReportPage(deck) - 1, true));
-  deck.querySelector("#nextResult").addEventListener("click", () => setReportPage(deck, getReportPage(deck) + 1, true));
+  deck.querySelector('[data-report-nav="prev"]').addEventListener("click", () => {
+    setReportPage(deck, getReportPage(deck) - 1, true);
+  });
+  deck.querySelector('[data-report-nav="next"]').addEventListener("click", () => {
+    setReportPage(deck, getReportPage(deck) + 1, true);
+  });
   bindReportSwipe(deck, pageFrameEl);
-  startReportPager(deck);
-  return;
-
-  const frame = deck.querySelector(".result-page-frame");
-  const dots = deck.querySelector(".result-dots");
-  const starField = deck.querySelector(".star-field");
-  sections.forEach((section, index) => {
-    section.classList.add("result-card-page");
-    frame.append(section);
-    const title = section.querySelector("h3")?.textContent || `第 ${index + 1} 页`;
-    const point = starPoints[index];
-    const star = document.createElement("button");
-    star.className = "result-star";
-    star.type = "button";
-    star.style.left = `${point.x}%`;
-    star.style.top = `${point.y}%`;
-    star.style.setProperty("--delay", `${index * 160}ms`);
-    star.setAttribute("aria-label", `点亮${title}`);
-    star.innerHTML = `<span></span><b>${title}</b>`;
-    star.addEventListener("click", () => setResultPage(deck, index, true));
-    starField.append(star);
-
-    const dot = document.createElement("button");
-    dot.className = "result-dot";
-    dot.type = "button";
-    dot.setAttribute("aria-label", `查看${title}`);
-    dot.addEventListener("click", () => setResultPage(deck, index, true));
-    dots.append(dot);
-  });
-
   resultPanel.replaceChildren(deck);
-  deck.querySelector("#prevResult").addEventListener("click", () => setResultPage(deck, getResultPage(deck) - 1));
-  deck.querySelector("#nextResult").addEventListener("click", () => setResultPage(deck, getResultPage(deck) + 1));
-  startConstellationReveal(deck);
+  startReportPager(deck, getConcernProfile(preferredConcern).theme);
 }
 
 function getConstellationPoints(count) {
@@ -1565,15 +1723,15 @@ function buildReportScene(theme) {
 function buildReportFooter(theme) {
   const footers = {
     overview: ["总览", "先看全局，再入细章"],
-    pillars: ["四柱", "年、月、日、时各定一方"],
-    calibration: ["校准", "时间越清，判断越稳"],
+    pillars: ["四柱", "看象意，不背术语"],
+    calibration: ["校准", "时间越清，判断越稳；不确定就保守看"],
     elements: ["五行", "气有偏重，取用有序"],
     reading: ["命盘", "性情与选择互相成局"],
     future: ["运势", "看趋势，也看可行动的节奏"],
-    wealth: ["财帛", "财气循规则而来，随信用而聚"],
-    relationship: ["姻缘", "关系贵在节奏相合"],
+    wealth: ["财帛", "先看现金流与信用，再谈偏财"],
+    relationship: ["姻缘", "关系贵在节奏相合，不做吓人的断语"],
     remedy: ["改运", "改运先改日常取舍"],
-    oracle: ["签文", "收束一念，落到行动"]
+    oracle: ["签文", "收束一念，落到今天能做的一步"]
   };
   const [label, text] = footers[theme] || footers.reading;
   return `
@@ -1594,14 +1752,15 @@ function getStarIndexForSection(sectionIndex, sectionCount, starCount) {
   return Math.min(starCount - 1, Math.round((sectionIndex / (sectionCount - 1)) * (starCount - 1)));
 }
 
-function startReportPager(deck) {
+function startReportPager(deck, preferredTheme = "overview") {
   clearResultRevealTimers();
-  const sections = [...deck.querySelectorAll(".report-section")];
+  const sections = getReportSections(deck);
   const stars = [...deck.querySelectorAll(".result-star")];
+  const preferredIndex = Math.max(0, sections.findIndex((section) => section.dataset.theme === preferredTheme));
   sections.forEach((section) => section.classList.remove("is-revealed", "is-current"));
   stars.forEach((star) => star.classList.remove("is-lit", "is-active"));
   deck.classList.add("is-revealing");
-  setReportPage(deck, 0);
+  setReportPage(deck, preferredIndex);
   resultRevealTimers.push(window.setTimeout(() => {
     deck.classList.remove("is-revealing");
   }, 1200));
@@ -1609,6 +1768,96 @@ function startReportPager(deck) {
 
 function getReportPage(deck) {
   return Number(deck.dataset.page || 0);
+}
+
+function getReportSections(deck) {
+  return [...deck.querySelectorAll(".result-stage > .report-section")];
+}
+
+function wrapReportContent(section) {
+  const content = document.createElement("div");
+  content.className = "report-content";
+  [...section.children].forEach((child) => {
+    if (child.classList.contains("report-scene") || child.classList.contains("report-motif")) return;
+    content.append(child);
+  });
+  buildReportInfoPicker(section, content);
+  section.append(content);
+}
+
+function buildReportInfoPicker(section, content) {
+  const title = content.querySelector("h3");
+  const signature = content.querySelector(".report-page-signature");
+  const sources = [...content.children].filter((child) => child !== title && child !== signature);
+  const panels = [];
+
+  sources.forEach((source) => {
+    if (source.classList.contains("insight-grid") || source.classList.contains("calc-grid") || source.classList.contains("pillars")) {
+      [...source.children].forEach((child) => panels.push(child));
+      source.remove();
+      return;
+    }
+    panels.push(source);
+  });
+
+  if (!panels.length && signature) panels.push(signature);
+
+  const board = document.createElement("div");
+  board.className = "report-token-board";
+  board.setAttribute("aria-label", "选择要查看的信息");
+  const detail = document.createElement("div");
+  detail.className = "report-detail";
+
+  panels.forEach((panel, index) => {
+    const active = index === 0;
+    panel.classList.add("report-info-panel");
+    panel.classList.toggle("is-active", active);
+    panel.hidden = !active;
+    panel.dataset.infoIndex = String(index);
+    const button = document.createElement("button");
+    button.className = "report-token";
+    button.type = "button";
+    button.dataset.infoIndex = String(index);
+    button.innerHTML = `<span>${String(index + 1).padStart(2, "0")}</span><strong>${getReportInfoLabel(panel, index)}</strong>`;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+    button.addEventListener("click", () => setActiveReportInfo(section, index));
+    board.append(button);
+    detail.append(panel);
+  });
+
+  if (title) title.after(board, detail);
+  else content.prepend(board, detail);
+  if (signature && signature.parentElement !== content) content.append(signature);
+}
+
+function getReportInfoLabel(panel, index) {
+  const selectors = ["h4", ".meta-label", ".pillar-label", ".pillar-name", ".tag", ".element-name"];
+  for (const selector of selectors) {
+    const text = panel.querySelector(selector)?.textContent?.trim();
+    if (text) return text.slice(0, 8);
+  }
+  if (panel.classList.contains("element-grid")) return "五行分布";
+  if (panel.classList.contains("tags")) return "关键标签";
+  return `信息${index + 1}`;
+}
+
+function setActiveReportInfo(section, infoIndex, focus = true) {
+  const safeIndex = Math.max(0, infoIndex);
+  section.dataset.activeInfo = String(safeIndex);
+  const tokens = [...section.querySelectorAll(".report-token")];
+  const panels = [...section.querySelectorAll(".report-info-panel")];
+  tokens.forEach((token, index) => {
+    const active = index === safeIndex;
+    token.classList.toggle("is-active", active);
+    token.setAttribute("aria-pressed", String(active));
+  });
+  panels.forEach((panel, index) => {
+    const active = index === safeIndex;
+    panel.classList.toggle("is-active", active);
+    panel.hidden = !active;
+  });
+  if (focus) panels[safeIndex]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
 function bindReportSwipe(deck, frame) {
@@ -1656,7 +1905,7 @@ function setReportPage(deck, nextIndex, userDriven = false) {
     clearResultRevealTimers();
     deck.classList.remove("is-revealing");
   }
-  const sections = [...deck.querySelectorAll(".report-section")];
+  const sections = getReportSections(deck);
   const stars = [...deck.querySelectorAll(".result-star")];
   const previous = getReportPage(deck);
   const page = Math.max(0, Math.min(nextIndex, sections.length - 1));
@@ -1665,7 +1914,7 @@ function setReportPage(deck, nextIndex, userDriven = false) {
   deck.classList.remove("turn-next", "turn-prev");
   if (direction !== "still") {
     deck.classList.add(`turn-${direction}`);
-    window.setTimeout(() => deck.classList.remove("turn-next", "turn-prev"), 620);
+    window.setTimeout(() => deck.classList.remove("turn-next", "turn-prev"), 700);
   }
   deck.dataset.page = String(page);
   sections.forEach((section, index) => {
@@ -1678,101 +1927,17 @@ function setReportPage(deck, nextIndex, userDriven = false) {
     star.classList.toggle("is-lit", index <= activeStar);
     star.setAttribute("aria-current", index === activeStar ? "step" : "false");
   });
-  [...deck.querySelectorAll(".result-dot")].forEach((dot, index) => {
-    dot.classList.toggle("is-active", index === page);
-    dot.setAttribute("aria-current", index === page ? "page" : "false");
-  });
   const title = sections[page]?.querySelector("h3")?.textContent || "结果";
   deck.dataset.theme = sections[page]?.dataset.theme || "reading";
   deck.querySelector("#resultPageTitle").textContent = title;
   deck.querySelector("#resultCurrentTitle").textContent = title;
   deck.querySelector("#resultPageCount").textContent = `${page + 1} / ${sections.length}`;
-  deck.querySelector("#prevResult").disabled = page === 0;
-  deck.querySelector("#nextResult").disabled = page === sections.length - 1;
-}
-
-function startReportReveal(deck) {
-  const sections = [...deck.querySelectorAll(".report-section")];
-  const stars = [...deck.querySelectorAll(".result-star")];
-  sections.forEach((section) => section.classList.remove("is-revealed", "is-current"));
-  stars.forEach((star) => star.classList.remove("is-lit", "is-active"));
-  deck.classList.add("is-revealing");
-  sections.forEach((_, index) => {
-    resultRevealTimers.push(window.setTimeout(() => {
-      revealReportTo(deck, index);
-      if (index === sections.length - 1) {
-        deck.classList.remove("is-revealing");
-        deck.querySelector("#resultPageTitle").textContent = "完整命理报告";
-        deck.querySelector("#resultCurrentTitle").textContent = "命书已展开";
-      }
-    }, 360 + index * 520));
-  });
-}
-
-function revealReportTo(deck, sectionIndex) {
-  const sections = [...deck.querySelectorAll(".report-section")];
-  const stars = [...deck.querySelectorAll(".result-star")];
-  const safeIndex = Math.max(0, Math.min(sectionIndex, sections.length - 1));
-  const activeStar = getStarIndexForSection(safeIndex, sections.length, stars.length);
-  sections.forEach((section, index) => {
-    section.classList.toggle("is-current", index === safeIndex);
-    if (index <= safeIndex) section.classList.add("is-revealed");
-  });
-  stars.forEach((star, index) => {
-    star.classList.toggle("is-active", index === activeStar);
-    if (index <= activeStar) star.classList.add("is-lit");
-    star.setAttribute("aria-current", index === activeStar ? "step" : "false");
-  });
-  const title = sections[safeIndex]?.querySelector("h3")?.textContent || "结果";
-  deck.querySelector("#resultPageTitle").textContent = title;
-  deck.querySelector("#resultCurrentTitle").textContent = title;
-  deck.querySelector("#resultPageCount").textContent = `${safeIndex + 1} / ${sections.length}`;
-}
-
-function startConstellationReveal(deck) {
-  const pages = [...deck.querySelectorAll(".result-card-page")];
-  const stars = [...deck.querySelectorAll(".result-star")];
-  pages.forEach((page) => page.classList.remove("is-active", "is-revealed"));
-  stars.forEach((star) => star.classList.remove("is-lit", "is-active"));
-  deck.classList.add("is-revealing");
-  pages.forEach((_, index) => {
-    resultRevealTimers.push(window.setTimeout(() => {
-      stars[index]?.classList.add("is-lit");
-      setResultPage(deck, index);
-      if (index === pages.length - 1) deck.classList.remove("is-revealing");
-    }, 360 + index * 760));
-  });
-}
-
-function getResultPage(deck) {
-  return Number(deck.dataset.page || 0);
-}
-
-function setResultPage(deck, nextIndex, userDriven = false) {
-  const pages = [...deck.querySelectorAll(".result-card-page")];
-  const page = Math.max(0, Math.min(nextIndex, pages.length - 1));
-  if (userDriven) {
-    clearResultRevealTimers();
-    deck.classList.remove("is-revealing");
-  }
-  deck.dataset.page = String(page);
-  pages.forEach((section, index) => {
-    section.classList.toggle("is-active", index === page);
-    if (index <= page) section.classList.add("is-revealed");
-  });
-  [...deck.querySelectorAll(".result-star")].forEach((star, index) => {
-    star.classList.toggle("is-active", index === page);
-    if (index <= page) star.classList.add("is-lit");
-    star.setAttribute("aria-current", index === page ? "step" : "false");
-  });
-  [...deck.querySelectorAll(".result-dot")].forEach((dot, index) => {
-    dot.classList.toggle("is-active", index === page);
-    dot.setAttribute("aria-current", index === page ? "page" : "false");
-  });
-  deck.querySelector("#resultPageTitle").textContent = pages[page].querySelector("h3")?.textContent || "结果";
-  deck.querySelector("#resultPageCount").textContent = `${page + 1} / ${pages.length}`;
-  deck.querySelector("#prevResult").disabled = page === 0;
-  deck.querySelector("#nextResult").disabled = page === pages.length - 1;
+  deck.querySelector("#resultNavTitle").textContent = title;
+  deck.querySelector("#resultNavHint").textContent = page >= sections.length - 1 ? "右滑回上一签" : "左滑看下一签";
+  const prevButton = deck.querySelector('[data-report-nav="prev"]');
+  const nextButton = deck.querySelector('[data-report-nav="next"]');
+  prevButton.disabled = page === 0;
+  nextButton.disabled = page === sections.length - 1;
 }
 
 function buildOracleTitle(chart) {
