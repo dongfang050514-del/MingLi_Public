@@ -3942,6 +3942,7 @@ body.stage-result .result-panel::after {
   position: relative;
   min-height: min(690px, calc(100svh - 292px));
   perspective: 1700px;
+  transform-style: preserve-3d;
 }
 
 .result-page-frame::before {
@@ -3957,7 +3958,107 @@ body.stage-result .result-panel::after {
   opacity: 0.72;
 }
 
+.result-page-frame::after {
+  position: absolute;
+  inset: 18px -10px 18px auto;
+  z-index: 0;
+  width: 34px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(180deg, rgba(111, 96, 63, 0.26) 0 1px, rgba(253, 251, 243, 0.76) 1px 5px),
+    linear-gradient(90deg, rgba(111, 96, 63, 0.16), rgba(253, 251, 243, 0.9));
+  border: 1px solid rgba(169, 142, 85, 0.22);
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 10px 18px 34px rgba(0, 0, 0, 0.18);
+  content: "";
+  opacity: 0.86;
+}
+
+.book-spine,
+.book-edge,
+.book-ribbon {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.book-spine {
+  left: -15px;
+  top: 20px;
+  bottom: 20px;
+  width: 34px;
+  background:
+    linear-gradient(90deg, rgba(83, 37, 32, 0.96), rgba(143, 63, 50, 0.9) 44%, rgba(64, 28, 25, 0.96)),
+    var(--cinnabar);
+  border: 1px solid rgba(232, 218, 178, 0.22);
+  border-radius: 8px 3px 3px 8px;
+  box-shadow: inset -8px 0 18px rgba(0, 0, 0, 0.22), 0 20px 42px rgba(0, 0, 0, 0.24);
+}
+
+.book-spine::before,
+.book-spine::after {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: rgba(232, 218, 178, 0.44);
+  content: "";
+}
+
+.book-spine::before {
+  top: 18%;
+}
+
+.book-spine::after {
+  bottom: 18%;
+}
+
+.book-edge.top-edge {
+  left: 25px;
+  right: 12px;
+  top: 8px;
+  height: 18px;
+  background: repeating-linear-gradient(0deg, rgba(111, 96, 63, 0.16) 0 1px, rgba(253, 251, 243, 0.72) 1px 4px);
+  border-radius: 8px 8px 0 0;
+  opacity: 0.82;
+}
+
+.book-edge.fore-edge {
+  right: -3px;
+  top: 36px;
+  bottom: 36px;
+  width: 16px;
+  background: repeating-linear-gradient(180deg, rgba(111, 96, 63, 0.2) 0 1px, rgba(253, 251, 243, 0.82) 1px 5px);
+  border-radius: 0 8px 8px 0;
+  opacity: 0.92;
+}
+
+.book-ribbon {
+  right: clamp(52px, 8vw, 96px);
+  top: 18px;
+  width: 18px;
+  height: min(210px, 34%);
+  background: linear-gradient(180deg, rgba(143, 63, 50, 0.95), rgba(102, 42, 36, 0.92));
+  border-radius: 0 0 9px 9px;
+  box-shadow: 0 12px 24px rgba(143, 63, 50, 0.22);
+  opacity: 0.78;
+}
+
+.book-ribbon::after {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -12px;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 12px solid rgba(102, 42, 36, 0.92);
+  content: "";
+}
+
 .result-page-frame .report-section.section {
+  position: relative;
+  z-index: 2;
   min-height: min(640px, calc(100svh - 330px));
   padding: clamp(24px, 3.8vw, 42px);
   overflow: hidden;
@@ -3970,6 +4071,7 @@ body.stage-result .result-panel::after {
     0 28px 66px rgba(0, 0, 0, 0.28),
     inset 16px 0 28px rgba(111, 96, 63, 0.08),
     inset -1px 0 0 rgba(255, 255, 255, 0.54);
+  transform-origin: left center;
 }
 
 .result-page-frame .report-section.section::before {
@@ -3996,11 +4098,59 @@ body.stage-result .result-panel::after {
 }
 
 .result-deck.turn-next .report-section.is-current {
-  animation: bookPageNext 820ms var(--deal) both;
+  animation: bookPageNext 520ms var(--deal) both;
 }
 
 .result-deck.turn-prev .report-section.is-current {
-  animation: bookPagePrev 820ms var(--deal) both;
+  animation: bookPagePrev 520ms var(--deal) both;
+}
+
+.page-sweep {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  z-index: 30;
+  display: block;
+  width: 78%;
+  pointer-events: none;
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, 0.78), rgba(253, 251, 243, 0.9) 38%, rgba(222, 216, 193, 0.62) 100%);
+  border: 1px solid rgba(169, 142, 85, 0.22);
+  border-radius: 8px;
+  opacity: 0;
+  contain: paint;
+  will-change: transform, opacity;
+}
+
+.page-sweep::before,
+.page-sweep::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  content: "";
+}
+
+.page-sweep::before {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.12), transparent 24%, rgba(255, 255, 255, 0.38) 58%, transparent 88%);
+  opacity: 0.36;
+}
+
+.page-sweep::after {
+  inset: 16px;
+  border: 1px solid rgba(169, 142, 85, 0.14);
+}
+
+.result-deck.turn-next .page-sweep {
+  transform-origin: left center;
+  animation: pageSweepNext 620ms cubic-bezier(0.2, 0.72, 0.2, 1) both;
+}
+
+.result-deck.turn-prev .page-sweep {
+  transform-origin: right center;
+  animation: pageSweepPrev 620ms cubic-bezier(0.2, 0.72, 0.2, 1) both;
 }
 
 .report-scene {
@@ -4402,37 +4552,67 @@ body.stage-result .result-panel::after {
 
 @keyframes bookPageNext {
   0% {
-    opacity: 0;
-    transform: translateX(46px) rotateY(-18deg) skewY(-2deg) scale(0.985);
-    filter: brightness(0.95);
+    opacity: 0.72;
+    transform: translateX(12px) scale(0.992);
   }
-  62% {
+  70% {
     opacity: 1;
-    transform: translateX(0) rotateY(2deg) skewY(0.7deg) scale(1);
-    filter: brightness(1.02);
+    transform: translateX(0) scale(1);
   }
   100% {
     opacity: 1;
     transform: none;
-    filter: none;
   }
 }
 
 @keyframes bookPagePrev {
   0% {
-    opacity: 0;
-    transform: translateX(-46px) rotateY(18deg) skewY(2deg) scale(0.985);
-    filter: brightness(0.95);
+    opacity: 0.72;
+    transform: translateX(-12px) scale(0.992);
   }
-  62% {
+  70% {
     opacity: 1;
-    transform: translateX(0) rotateY(-2deg) skewY(-0.7deg) scale(1);
-    filter: brightness(1.02);
+    transform: translateX(0) scale(1);
   }
   100% {
     opacity: 1;
     transform: none;
-    filter: none;
+  }
+}
+
+@keyframes pageSweepNext {
+  0% {
+    opacity: 0;
+    transform: translateX(48%) skewY(0deg) scaleX(0.18);
+  }
+  18% {
+    opacity: 0.9;
+  }
+  54% {
+    opacity: 0.82;
+    transform: translateX(2%) skewY(-1.5deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-54%) skewY(-3deg) scaleX(0.2);
+  }
+}
+
+@keyframes pageSweepPrev {
+  0% {
+    opacity: 0;
+    transform: translateX(-48%) skewY(0deg) scaleX(0.18);
+  }
+  18% {
+    opacity: 0.9;
+  }
+  54% {
+    opacity: 0.82;
+    transform: translateX(-2%) skewY(1.5deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(54%) skewY(3deg) scaleX(0.2);
   }
 }
 
@@ -4485,6 +4665,7 @@ body.stage-result .result-panel::after {
 
   .result-page-frame {
     min-height: auto;
+    perspective: 1300px;
   }
 
   .result-page-frame::before {
@@ -4492,9 +4673,63 @@ body.stage-result .result-panel::after {
     right: 12%;
   }
 
+  .result-page-frame::after {
+    right: -7px;
+    top: 14px;
+    bottom: 18px;
+    width: 18px;
+  }
+
+  .book-spine {
+    left: -8px;
+    top: 18px;
+    bottom: 18px;
+    width: 18px;
+  }
+
+  .book-spine::before,
+  .book-spine::after {
+    left: 5px;
+    right: 5px;
+  }
+
+  .book-edge.top-edge {
+    left: 16px;
+    right: 8px;
+    top: 6px;
+    height: 12px;
+  }
+
+  .book-edge.fore-edge {
+    right: -2px;
+    top: 28px;
+    bottom: 28px;
+    width: 9px;
+  }
+
+  .book-ribbon {
+    right: 42px;
+    top: 12px;
+    width: 13px;
+    height: 130px;
+  }
+
+  .book-ribbon::after {
+    bottom: -9px;
+    border-left-width: 6.5px;
+    border-right-width: 6.5px;
+    border-top-width: 9px;
+  }
+
+  .page-sweep {
+    top: 14px;
+    bottom: 18px;
+    width: 56%;
+  }
+
   .result-page-frame .report-section.section {
     min-height: calc(100svh - 348px);
-    padding: 18px 14px 106px;
+    padding: 18px 14px 106px 18px;
     border-radius: var(--radius);
   }
 
@@ -6247,7 +6482,13 @@ function setupResultDeck() {
       <div class="star-field" aria-label="北斗星点"></div>
       <span class="star-sweep" aria-hidden="true"></span>
     </div>
-    <div class="result-page-frame" aria-label="命理分析单页"></div>
+    <div class="result-page-frame" aria-label="命理分析书页">
+      <span class="book-spine" aria-hidden="true"></span>
+      <span class="book-edge top-edge" aria-hidden="true"></span>
+      <span class="book-edge fore-edge" aria-hidden="true"></span>
+      <span class="book-ribbon" aria-hidden="true"></span>
+      <span class="page-sweep" aria-hidden="true"></span>
+    </div>
     <div class="swipe-hint" aria-hidden="true">
       <span>左右滑动翻页</span>
       <i></i>
@@ -6475,7 +6716,7 @@ function getStarIndexForSection(sectionIndex, sectionCount, starCount) {
 
 function startReportPager(deck) {
   clearResultRevealTimers();
-  const sections = [...deck.querySelectorAll(".report-section")];
+  const sections = getReportSections(deck);
   const stars = [...deck.querySelectorAll(".result-star")];
   sections.forEach((section) => section.classList.remove("is-revealed", "is-current"));
   stars.forEach((star) => star.classList.remove("is-lit", "is-active"));
@@ -6488,6 +6729,10 @@ function startReportPager(deck) {
 
 function getReportPage(deck) {
   return Number(deck.dataset.page || 0);
+}
+
+function getReportSections(deck) {
+  return [...deck.querySelectorAll(".result-page-frame > .report-section")];
 }
 
 function bindReportSwipe(deck, frame) {
@@ -6535,7 +6780,7 @@ function setReportPage(deck, nextIndex, userDriven = false) {
     clearResultRevealTimers();
     deck.classList.remove("is-revealing");
   }
-  const sections = [...deck.querySelectorAll(".report-section")];
+  const sections = getReportSections(deck);
   const stars = [...deck.querySelectorAll(".result-star")];
   const previous = getReportPage(deck);
   const page = Math.max(0, Math.min(nextIndex, sections.length - 1));
@@ -6544,7 +6789,7 @@ function setReportPage(deck, nextIndex, userDriven = false) {
   deck.classList.remove("turn-next", "turn-prev");
   if (direction !== "still") {
     deck.classList.add(`turn-${direction}`);
-    window.setTimeout(() => deck.classList.remove("turn-next", "turn-prev"), 620);
+    window.setTimeout(() => deck.classList.remove("turn-next", "turn-prev"), 700);
   }
   deck.dataset.page = String(page);
   sections.forEach((section, index) => {
@@ -6571,7 +6816,7 @@ function setReportPage(deck, nextIndex, userDriven = false) {
 }
 
 function startReportReveal(deck) {
-  const sections = [...deck.querySelectorAll(".report-section")];
+  const sections = getReportSections(deck);
   const stars = [...deck.querySelectorAll(".result-star")];
   sections.forEach((section) => section.classList.remove("is-revealed", "is-current"));
   stars.forEach((star) => star.classList.remove("is-lit", "is-active"));
@@ -6589,7 +6834,7 @@ function startReportReveal(deck) {
 }
 
 function revealReportTo(deck, sectionIndex) {
-  const sections = [...deck.querySelectorAll(".report-section")];
+  const sections = getReportSections(deck);
   const stars = [...deck.querySelectorAll(".result-star")];
   const safeIndex = Math.max(0, Math.min(sectionIndex, sections.length - 1));
   const activeStar = getStarIndexForSection(safeIndex, sections.length, stars.length);
