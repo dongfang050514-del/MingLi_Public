@@ -354,13 +354,18 @@ function beginReading(data) {
 
   queueReadingStep(() => {
     renderChart(data, chart);
-    resultPanel.classList.add("reveal");
     document.body.classList.remove("is-reading");
     document.body.classList.add("has-reading");
-    setStage("result");
+    updateCalculationFlow(5, "命盘已成，停留观盘", 100);
+    document.querySelector("#plateSubtitle").textContent = "四柱与五行已经入盘，先停留片刻，再展开结果签。";
     setCastStep(4);
-    setReadingState(false);
   }, 4180);
+
+  queueReadingStep(() => {
+    resultPanel.classList.add("reveal");
+    setStage("result");
+    setReadingState(false);
+  }, 7600);
 }
 
 function setStage(stage) {
@@ -1002,19 +1007,22 @@ function getUsefulElements(dayElement, level) {
 function buildFutureInsights(chart, usefulText) {
   const base = {
     weak: {
-      near: `近期宜先补资源与体力，不急着硬冲。先把贵人、资料、预算和作息补齐，再谈放大成果，${usefulText}越稳定，运势越容易打开。`,
-      year: `年度主线是“先蓄后发”。上半年适合修复基础、学习和找支持，下半年再把机会落成项目或收入。`,
-      risk: "忌在状态不足时连续答应别人，越忙越要留恢复期；承诺过满会让好运变成消耗。"
+      near: `近期不要硬撑。先把睡眠、预算、资料、人手补齐，再去接新机会；${usefulText}稳了，做事会明显没那么费劲。`,
+      year: "今年适合先打底，再放大。先补能力和资源，再把一个项目、一个客户或一个方向做扎实。",
+      risk: "容易因为不好意思拒绝而把自己排满。凡是会连续消耗你两周以上的事，先别立刻答应。",
+      action: "这周先做一件事：把最重要的目标写成三步，只推进第一步；其他临时请求先延后一天再回复。"
     },
     strong: {
-      near: `近期执行力足，适合推进卡住的事，但要把能量导向成果和协作。多用${usefulText}泄秀制衡，少靠一口气硬顶。`,
-      year: "年度主线是“收势成器”。机会来自输出、曝光、作品、项目收口，越能复盘和交付，越容易见到回报。",
-      risk: "忌强势替别人决定，也忌同时开太多战线；锋芒太满时，人际阻力会先于结果出现。"
+      near: `近期行动力够，适合把卡住的事往前推。但重点不是更用力，而是把力气放到交付、协作和成果上。`,
+      year: "今年适合把已经开始的事收成作品、业绩或可展示的结果。越能复盘和交付，越容易有回报。",
+      risk: "容易太急、太强势，替别人决定。事情推进前，多问一句“你需要我怎么配合”。",
+      action: "这周先收尾一件拖着的事，不再新开太多任务；把结果发出去，让别人看见你的交付。"
     },
     balanced: {
-      near: `近期运势重在选择，不缺机会，但怕平均用力。把${usefulText}放进日程，先确定一到两个主线。`,
-      year: "年度主线是“择一深耕”。稳定推进比频繁换方向更有利，适合把现有资源做成清晰成果。",
-      risk: "忌犹豫太久或反复比较；选择本身会带来运势，拖延会削弱节奏。"
+      near: `近期不是没机会，而是容易什么都想试。先选一到两个主线，把${usefulText}相关动作排进日程。`,
+      year: "今年适合少换方向，多深耕。已经有基础的事，比完全从零开始的事更容易见效。",
+      risk: "容易一直比较，迟迟不定。拖延越久，状态越散。",
+      action: "这周做一个取舍：保留一个主线目标，删掉一个不重要的安排，让精力重新集中。"
     }
   };
   return base[chart.strength.level];
@@ -1026,14 +1034,17 @@ function buildWealthInsights(chart, dayProfile, dominantProfile, usefulText) {
   const hasWealthTone = chart.normalized[wealthElement] >= 18;
   return {
     money: hasWealthTone
-      ? `财星气已显，适合靠清晰报价、稳定交付、长期客户和可复购服务来进财。财富不宜靠侥幸，宜靠规则与信用累积。`
-      : `财星不算最显，先不要把赚钱只押在短期机会。更适合先补${usefulText}，用能力、作品、专业度间接生财。`,
-    career: `${dayProfile.career}当前${chart.dominantElement}气突出，${dominantProfile.balance}把事业目标拆成可衡量节点，会比凭感觉推进更稳。`,
+      ? "你的赚钱方式更适合靠稳定交付、清晰报价、长期客户和可复购服务，不适合把希望押在一次运气上。"
+      : `现在不适合只追短期赚钱机会。先把${usefulText}补起来，用作品、能力、专业度和稳定输出间接生财。`,
+    career: `${dayProfile.career}当前${chart.dominantElement}气突出，${dominantProfile.balance}做事业时别只凭感觉，把目标拆成能检查的节点。`,
     risk: chart.strength.level === "strong"
       ? "守财关键是控制冲动决策，尤其避免为了证明自己而加码投入。"
       : chart.strength.level === "weak"
         ? "守财关键是先留安全垫，重大支出前先确认现金流和支持系统。"
-        : "守财关键是少做分散小投入，把钱和精力集中在能长期复利的方向。"
+        : "守财关键是少做分散小投入，把钱和精力集中在能长期复利的方向。",
+    action: hasWealthTone
+      ? "这周先整理价格、服务内容或作品案例，让别人知道你能稳定提供什么价值。"
+      : "这周先别急着加大投入，先做一份账：固定收入、固定支出、可动用现金和未来三个月压力。"
   };
 }
 
@@ -1041,18 +1052,21 @@ function buildRelationshipInsights(chart, dayProfile, usefulText) {
   const textByLevel = {
     weak: {
       attraction: "你的吸引力来自细腻、可靠和愿意理解对方，但不要用过度付出来换安全感。",
-      rhythm: `关系里宜先建立稳定节奏，补${usefulText}后再表达需求，会更容易被认真接住。`,
-      blindSpot: "盲区是容易委屈自己或把沉默当成体贴；重要感受要说清楚，不要等对方猜。"
+      rhythm: `关系里先要稳定节奏，再谈深度承诺。补${usefulText}后再表达需求，会更容易被认真接住。`,
+      blindSpot: "盲区是容易委屈自己或把沉默当成体贴；重要感受要说清楚，不要等对方猜。",
+      action: "这周练习一句话：“我希望这件事可以这样处理”，不要只说“都可以”。"
     },
     strong: {
       attraction: "你的吸引力来自直接、能扛事和有行动力，适合被坦诚、成熟、有边界的人看见。",
-      rhythm: `关系里宜多留倾听空间，用${usefulText}把强表达转成温和互动，亲密感会更稳。`,
-      blindSpot: "盲区是节奏太快或替对方安排太多；越在乎，越要给对方选择余地。"
+      rhythm: `关系里要多留倾听空间，用${usefulText}把强表达转成温和互动，亲密感会更稳。`,
+      blindSpot: "盲区是节奏太快或替对方安排太多；越在乎，越要给对方选择余地。",
+      action: "这周少替对方下结论，多问一句：“你真实想法是什么？”"
     },
     balanced: {
       attraction: "你的吸引力来自稳定、好沟通和能照顾整体局面，关系适合慢慢加深。",
-      rhythm: `关系里宜保持共同目标和固定沟通，补${usefulText}能让关系从舒服走向确定。`,
-      blindSpot: "盲区是太讲道理而少表达偏爱；适当直接示好，会比保持体面更有温度。"
+      rhythm: `关系里保持共同目标和固定沟通，补${usefulText}能让关系从舒服走向确定。`,
+      blindSpot: "盲区是太讲道理而少表达偏爱；适当直接示好，会比保持体面更有温度。",
+      action: "这周主动表达一次具体喜欢或感谢，让对方知道你不是只在理性分析。"
     }
   };
   return {
@@ -1071,13 +1085,14 @@ function buildRemedyInsights(chart, usefulText) {
   };
   const actions = chart.usefulElements.map((element) => elementActions[element]).join("");
   return {
-    direction: `此盘补运先看${usefulText}。改运不是迷信地等，而是把环境、习惯、人际和选择调到能生扶你的方向。`,
+    direction: `你的改运重点先看${usefulText}。说白了，就是把生活环境、习惯、人际和选择调到更支持你的状态。`,
     action: actions,
     boundary: chart.strength.level === "strong"
       ? "少逞强、少硬控、少同时开局；把强势能量收进作品、结果和长期信用。"
       : chart.strength.level === "weak"
         ? "少熬夜、少借力不足时硬撑、少被他人节奏牵着走；先养气，再出手。"
-        : "少摇摆、少平均用力、少为了所有人满意而模糊目标；越清楚，越有运。"
+        : "少摇摆、少平均用力、少为了所有人满意而模糊目标；越清楚，越有运。",
+    today: "今天就能开始：清理一个让你分心的东西，固定一个小习惯，坚持七天，比临时求好运更有用。"
   };
 }
 
@@ -1266,6 +1281,10 @@ function renderChart(data, chart) {
           <h4>需要避开的坑</h4>
           <p>${futureTexts.risk}</p>
         </article>
+        <article class="insight">
+          <h4>这周怎么做</h4>
+          <p>${futureTexts.action}</p>
+        </article>
       </div>
     </div>
 
@@ -1283,6 +1302,10 @@ function renderChart(data, chart) {
         <article class="insight">
           <h4>守财提醒</h4>
           <p>${wealthTexts.risk}</p>
+        </article>
+        <article class="insight">
+          <h4>这周怎么做</h4>
+          <p>${wealthTexts.action}</p>
         </article>
       </div>
     </div>
@@ -1302,6 +1325,10 @@ function renderChart(data, chart) {
           <h4>关系盲区</h4>
           <p>${relationshipTexts.blindSpot}</p>
         </article>
+        <article class="insight">
+          <h4>这周怎么说</h4>
+          <p>${relationshipTexts.action}</p>
+        </article>
       </div>
     </div>
 
@@ -1319,6 +1346,10 @@ function renderChart(data, chart) {
         <article class="insight">
           <h4>日常取舍</h4>
           <p>${remedyTexts.boundary}</p>
+        </article>
+        <article class="insight">
+          <h4>今天就做</h4>
+          <p>${remedyTexts.today}</p>
         </article>
       </div>
     </div>
@@ -1416,7 +1447,7 @@ function enhanceReadableResultSections(context) {
       points: [
         futureTexts.near,
         futureTexts.year,
-        `具体执行上，接下来可以做三件事：第一，保留一个主线目标；第二，把目标拆成每周可完成的小步骤；第三，每月底复盘一次，删掉消耗你的安排。`
+        futureTexts.action
       ]
     },
     {
@@ -1425,7 +1456,8 @@ function enhanceReadableResultSections(context) {
         `你的财星对应${wealthElement}，当前财星权重约${chart.normalized[wealthElement]}%。这不是“有没有钱”的判决，而是看你更适合怎么把能力变成收入。`,
         wealthTexts.money,
         wealthTexts.career,
-        `守财提醒：${wealthTexts.risk}简单说，别只追短期机会，要把钱放到能复利的能力、客户、作品和专业信用里。`
+        `守财提醒：${wealthTexts.risk}`,
+        wealthTexts.action
       ]
     },
     {
@@ -1433,7 +1465,8 @@ function enhanceReadableResultSections(context) {
       points: [
         relationshipTexts.attraction,
         relationshipTexts.rhythm,
-        `${relationshipTexts.blindSpot}如果已经有关系，建议把“我希望你怎么做”说清楚；如果还在寻找，先看对方是否稳定、尊重边界、愿意沟通。`
+        relationshipTexts.blindSpot,
+        relationshipTexts.action
       ]
     },
     {
@@ -1441,8 +1474,8 @@ function enhanceReadableResultSections(context) {
       points: [
         remedyTexts.direction,
         remedyTexts.action,
-        `接下来七天可以从一个小动作开始：每天固定做一件能补${usefulText}的事，并记录它带来的状态变化。改运最怕贪多，先让一个动作稳定下来。`,
-        remedyTexts.boundary
+        remedyTexts.boundary,
+        remedyTexts.today
       ]
     },
     {
@@ -1614,7 +1647,7 @@ function setupResultDeck(preferredConcern = "overview") {
   deck.querySelector('[data-report-nav="next"]').addEventListener("click", () => {
     setReportPage(deck, getReportPage(deck) + 1, true);
   });
-  bindReportSwipe(deck, pageFrameEl);
+  bindReportSwipe(deck, deck);
   resultPanel.replaceChildren(deck);
   startReportPager(deck, getConcernProfile(preferredConcern).theme);
 }
@@ -1865,39 +1898,101 @@ function bindReportSwipe(deck, frame) {
   let startY = 0;
   let startTime = 0;
   let tracking = false;
+  let activeSection = null;
+
+  function startSwipe(x, y) {
+    startX = x;
+    startY = y;
+    startTime = Date.now();
+    tracking = true;
+    activeSection = getReportSections(deck)[getReportPage(deck)];
+    activeSection?.classList.add("is-swiping");
+  }
+
+  function moveSwipe(x, y, event) {
+    if (!tracking) return;
+    const dx = x - startX;
+    const dy = y - startY;
+    if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      event?.preventDefault?.();
+      const limited = Math.max(-64, Math.min(64, dx * 0.32));
+      if (activeSection) {
+        activeSection.style.transition = "none";
+        activeSection.style.transform = `translateX(${limited}px) scale(0.997)`;
+      }
+    }
+  }
+
+  function clearSwipe() {
+    if (!activeSection) return;
+    activeSection.classList.remove("is-swiping");
+    activeSection.style.transition = "transform 180ms ease-out";
+    activeSection.style.transform = "";
+    window.setTimeout(() => {
+      if (activeSection) activeSection.style.transition = "";
+      activeSection = null;
+    }, 190);
+  }
+
+  function finishSwipe(x, y) {
+    if (!tracking) return;
+    tracking = false;
+    const dx = x - startX;
+    const dy = y - startY;
+    const elapsed = Date.now() - startTime;
+    const shouldTurn = Math.abs(dx) >= 46 && Math.abs(dx) >= Math.abs(dy) * 1.08 && elapsed <= 1000;
+    clearSwipe();
+    if (!shouldTurn) return;
+    deck.classList.add("has-swiped");
+    setReportPage(deck, getReportPage(deck) + (dx < 0 ? 1 : -1), true);
+  }
 
   frame.addEventListener("touchstart", (event) => {
     const touch = event.touches[0];
     if (!touch) return;
-    startX = touch.clientX;
-    startY = touch.clientY;
-    startTime = Date.now();
-    tracking = true;
+    startSwipe(touch.clientX, touch.clientY);
   }, { passive: true });
 
   frame.addEventListener("touchmove", (event) => {
-    if (!tracking) return;
     const touch = event.touches[0];
     if (!touch) return;
-    const dx = touch.clientX - startX;
-    const dy = touch.clientY - startY;
-    if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-      event.preventDefault();
-    }
+    moveSwipe(touch.clientX, touch.clientY, event);
   }, { passive: false });
 
   frame.addEventListener("touchend", (event) => {
-    if (!tracking) return;
-    tracking = false;
     const touch = event.changedTouches[0];
-    if (!touch) return;
-    const dx = touch.clientX - startX;
-    const dy = touch.clientY - startY;
-    const elapsed = Date.now() - startTime;
-    if (Math.abs(dx) < 54 || Math.abs(dx) < Math.abs(dy) * 1.15 || elapsed > 900) return;
-    deck.classList.add("has-swiped");
-    setReportPage(deck, getReportPage(deck) + (dx < 0 ? 1 : -1), true);
+    if (!touch) {
+      tracking = false;
+      return clearSwipe();
+    }
+    finishSwipe(touch.clientX, touch.clientY);
   }, { passive: true });
+
+  frame.addEventListener("touchcancel", () => {
+    tracking = false;
+    clearSwipe();
+  }, { passive: true });
+
+  frame.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch" || event.button !== 0) return;
+    frame.setPointerCapture?.(event.pointerId);
+    startSwipe(event.clientX, event.clientY);
+  });
+
+  frame.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "touch") return;
+    moveSwipe(event.clientX, event.clientY, event);
+  });
+
+  frame.addEventListener("pointerup", (event) => {
+    if (event.pointerType === "touch") return;
+    finishSwipe(event.clientX, event.clientY);
+  });
+
+  frame.addEventListener("pointercancel", () => {
+    tracking = false;
+    clearSwipe();
+  });
 }
 
 function setReportPage(deck, nextIndex, userDriven = false) {
