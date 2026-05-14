@@ -5371,6 +5371,8 @@ body.stage-result .result-panel::after {
 .result-ritual-stage {
   position: relative;
   min-height: min(720px, calc(100svh - 286px));
+  overflow: hidden;
+  perspective: 1100px;
   touch-action: pan-y;
   isolation: isolate;
 }
@@ -5510,15 +5512,51 @@ body.stage-result .result-panel::after {
 }
 
 .result-deck.turn-next .result-ritual-stage .report-section.is-current {
-  animation: ritualSwapNext 320ms cubic-bezier(0.2, 0.78, 0.2, 1) both;
+  animation: ritualSwapNext 460ms cubic-bezier(0.16, 0.84, 0.2, 1) both;
 }
 
 .result-deck.turn-prev .result-ritual-stage .report-section.is-current {
-  animation: ritualSwapPrev 320ms cubic-bezier(0.2, 0.78, 0.2, 1) both;
+  animation: ritualSwapPrev 460ms cubic-bezier(0.16, 0.84, 0.2, 1) both;
+}
+
+.result-ritual-stage .report-section.is-exiting {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  min-height: 100%;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.result-ritual-stage .report-section.exit-next {
+  animation: ritualExitNext 460ms cubic-bezier(0.28, 0.04, 0.18, 1) both;
+}
+
+.result-ritual-stage .report-section.exit-prev {
+  animation: ritualExitPrev 460ms cubic-bezier(0.28, 0.04, 0.18, 1) both;
 }
 
 .result-ritual-stage .report-section.is-swiping {
   will-change: transform;
+}
+
+.result-deck.is-dragging .ritual-aura {
+  transform: translateX(calc(var(--swipe-x, 0px) * 0.1));
+  transition: none;
+}
+
+.result-deck.is-dragging .ritual-rail {
+  opacity: calc(0.62 + var(--swipe-progress, 0) * 0.24);
+  transform: translateX(calc(var(--swipe-x, 0px) * 0.08));
+}
+
+.result-deck.is-turning .ritual-rail {
+  animation: railFlash 460ms ease both;
+}
+
+.result-deck.is-turning .result-gate-nav {
+  animation: gateNavPulse 460ms ease both;
 }
 
 .result-ritual-stage .report-scene {
@@ -5995,23 +6033,80 @@ body.stage-result .result-panel::after {
 
 @keyframes ritualSwapNext {
   from {
-    opacity: 0.99;
-    transform: translateX(28px) translateY(2px) scale(0.997);
+    opacity: 0.72;
+    transform: translate3d(64px, 8px, 0) rotateY(-8deg) scale(0.972);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-5px, 0, 0) rotateY(1deg) scale(1.004);
   }
   to {
     opacity: 1;
-    transform: translateX(0) translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
   }
 }
 
 @keyframes ritualSwapPrev {
   from {
-    opacity: 0.99;
-    transform: translateX(-28px) translateY(2px) scale(0.997);
+    opacity: 0.72;
+    transform: translate3d(-64px, 8px, 0) rotateY(8deg) scale(0.972);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(5px, 0, 0) rotateY(-1deg) scale(1.004);
   }
   to {
     opacity: 1;
-    transform: translateX(0) translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
+  }
+}
+
+@keyframes ritualExitNext {
+  from {
+    opacity: 0.96;
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(-72px, -6px, 0) rotateY(9deg) scale(0.975);
+  }
+}
+
+@keyframes ritualExitPrev {
+  from {
+    opacity: 0.96;
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(72px, -6px, 0) rotateY(-9deg) scale(0.975);
+  }
+}
+
+@keyframes railFlash {
+  0% {
+    opacity: 0.55;
+    transform: scaleX(0.72);
+  }
+  48% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0.62;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes gateNavPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    border-color: rgba(232, 218, 178, 0.18);
+  }
+  48% {
+    transform: translateY(-2px);
+    border-color: rgba(232, 218, 178, 0.42);
   }
 }
 

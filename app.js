@@ -232,6 +232,7 @@ const wizardState = {
 };
 let readingTimers = [];
 let resultRevealTimers = [];
+let resultTurnTimer = 0;
 
 initControls();
 drawStarField();
@@ -1906,6 +1907,10 @@ function bindReportSwipe(deck, frame) {
     startTime = Date.now();
     tracking = true;
     activeSection = getReportSections(deck)[getReportPage(deck)];
+    deck.classList.add("is-dragging");
+    deck.classList.remove("swipe-left", "swipe-right");
+    deck.style.setProperty("--swipe-x", "0px");
+    deck.style.setProperty("--swipe-progress", "0");
     activeSection?.classList.add("is-swiping");
   }
 
@@ -1915,15 +1920,23 @@ function bindReportSwipe(deck, frame) {
     const dy = y - startY;
     if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.2) {
       event?.preventDefault?.();
-      const limited = Math.max(-64, Math.min(64, dx * 0.32));
+      const limited = Math.max(-86, Math.min(86, dx * 0.42));
+      const progress = Math.min(1, Math.abs(dx) / 150);
+      deck.classList.toggle("swipe-left", dx < 0);
+      deck.classList.toggle("swipe-right", dx > 0);
+      deck.style.setProperty("--swipe-x", `${limited}px`);
+      deck.style.setProperty("--swipe-progress", progress.toFixed(3));
       if (activeSection) {
         activeSection.style.transition = "none";
-        activeSection.style.transform = `translateX(${limited}px) scale(0.997)`;
+        activeSection.style.transform = `translate3d(${limited}px, 0, 0) rotateY(${limited * -0.045}deg) scale(${1 - progress * 0.018})`;
       }
     }
   }
 
   function clearSwipe() {
+    deck.classList.remove("is-dragging", "swipe-left", "swipe-right");
+    deck.style.removeProperty("--swipe-x");
+    deck.style.removeProperty("--swipe-progress");
     if (!activeSection) return;
     activeSection.classList.remove("is-swiping");
     activeSection.style.transition = "transform 180ms ease-out";
@@ -1941,8 +1954,19 @@ function bindReportSwipe(deck, frame) {
     const dy = y - startY;
     const elapsed = Date.now() - startTime;
     const shouldTurn = Math.abs(dx) >= 46 && Math.abs(dx) >= Math.abs(dy) * 1.08 && elapsed <= 1000;
-    clearSwipe();
-    if (!shouldTurn) return;
+    if (!shouldTurn) {
+      clearSwipe();
+      return;
+    }
+    deck.classList.remove("is-dragging", "swipe-left", "swipe-right");
+    deck.style.removeProperty("--swipe-x");
+    deck.style.removeProperty("--swipe-progress");
+    if (activeSection) {
+      activeSection.classList.remove("is-swiping");
+      activeSection.style.transition = "";
+      activeSection.style.transform = "";
+      activeSection = null;
+    }
     deck.classList.add("has-swiped");
     setReportPage(deck, getReportPage(deck) + (dx < 0 ? 1 : -1), true);
   }
@@ -2006,10 +2030,24 @@ function setReportPage(deck, nextIndex, userDriven = false) {
   const page = Math.max(0, Math.min(nextIndex, sections.length - 1));
   const activeStar = getStarIndexForSection(page, sections.length, stars.length);
   const direction = page > previous ? "next" : page < previous ? "prev" : "still";
-  deck.classList.remove("turn-next", "turn-prev");
+  if (resultTurnTimer) window.clearTimeout(resultTurnTimer);
+  sections.forEach((section) => {
+    section.classList.remove("is-exiting", "exit-next", "exit-prev");
+    section.removeAttribute("aria-hidden");
+  });
+  deck.classList.remove("is-turning", "turn-next", "turn-prev");
   if (direction !== "still") {
-    deck.classList.add(`turn-${direction}`);
-    window.setTimeout(() => deck.classList.remove("turn-next", "turn-prev"), 700);
+    const exitingSection = sections[previous];
+    exitingSection?.classList.add("is-exiting", `exit-${direction}`);
+    exitingSection?.setAttribute("aria-hidden", "true");
+    deck.classList.add("is-turning", `turn-${direction}`);
+    resultTurnTimer = window.setTimeout(() => {
+      deck.classList.remove("is-turning", "turn-next", "turn-prev");
+      sections.forEach((section) => {
+        section.classList.remove("is-exiting", "exit-next", "exit-prev");
+        section.removeAttribute("aria-hidden");
+      });
+    }, 620);
   }
   deck.dataset.page = String(page);
   sections.forEach((section, index) => {
