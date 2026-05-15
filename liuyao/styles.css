@@ -625,6 +625,10 @@ textarea:focus {
   opacity: 0.42;
 }
 
+body[data-stage="cast"] #castButton:not(:disabled) {
+  animation: castPulse 1800ms ease-in-out infinite;
+}
+
 .cast-head,
 .result-head {
   display: flex;
@@ -1286,6 +1290,11 @@ textarea:focus {
   0% { transform: translateY(-48px) rotateY(0) rotateZ(22deg); }
   68% { transform: translateY(3px) rotateY(500deg) rotateZ(10deg); }
   100% { transform: translateY(0) rotateY(720deg) rotateZ(2deg); }
+}
+
+@keyframes castPulse {
+  0%, 100% { box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 0 0 rgba(214, 162, 94, 0); }
+  50% { box-shadow: 0 18px 34px rgba(0, 0, 0, 0.32), 0 0 0 8px rgba(214, 162, 94, 0.12); }
 }
 
 @keyframes termFloat {

@@ -145,7 +145,7 @@ const questionInput = document.querySelector("#questionInput");
 const lineBox = document.querySelector("#hexagramLines");
 const coinTray = document.querySelector("#coinTray");
 const castButton = document.querySelector("#castButton");
-const autoCastButton = document.querySelector("#autoCastButton");
+const rethinkButton = document.querySelector("#rethinkButton");
 const castTitle = document.querySelector("#castTitle");
 const castHint = document.querySelector("#castHint");
 const resultTopic = document.querySelector("#resultTopic");
@@ -166,8 +166,6 @@ const state = {
   pages: [],
   page: 0,
   turningTimer: 0,
-  autoTimer: 0,
-  autoCasting: false,
   startX: 0,
   startY: 0,
   swiping: false
@@ -190,15 +188,16 @@ form.addEventListener("submit", (event) => {
   state.topic = new FormData(form).get("topic") || "general";
   resetCast();
   setStage("cast");
-  window.setTimeout(autoCast, 360);
 });
 
 castButton.addEventListener("click", () => throwOneLine());
-autoCastButton.addEventListener("click", autoCast);
+rethinkButton.addEventListener("click", () => {
+  resetCast();
+  setStage("entry");
+});
 prevSign.addEventListener("click", () => setResultPage(state.page - 1, "prev"));
 nextSign.addEventListener("click", () => setResultPage(state.page + 1, "next"));
 restartButton.addEventListener("click", () => {
-  window.clearInterval(state.autoTimer);
   resetCast();
   setStage("entry");
 });
@@ -253,21 +252,19 @@ function initLines() {
 }
 
 function resetCast() {
-  window.clearInterval(state.autoTimer);
   state.lines = [];
   state.pages = [];
   state.page = 0;
-  state.autoCasting = false;
   castButton.disabled = false;
-  autoCastButton.disabled = false;
-  castHint.textContent = "轻点铜钱，连续摇 6 次生成结果。";
+  rethinkButton.disabled = false;
+  castHint.textContent = "等心里那一刻到了，亲手抛下 6 次。";
   initLines();
 }
 
 function throwOneLine() {
   if (state.lines.length >= 6) return;
   castButton.disabled = true;
-  autoCastButton.disabled = true;
+  rethinkButton.disabled = true;
   coinTray.classList.remove("is-throwing");
   void coinTray.offsetWidth;
   coinTray.classList.add("is-throwing");
@@ -277,29 +274,16 @@ function throwOneLine() {
     state.lines.push(line);
     updateCoins(line);
     updateLineState();
-    castButton.disabled = state.autoCasting || state.lines.length >= 6;
-    autoCastButton.disabled = state.autoCasting || state.lines.length >= 6;
+    castButton.disabled = state.lines.length >= 6;
+    rethinkButton.disabled = false;
     if (state.lines.length >= 6) {
-      state.autoCasting = false;
       castHint.textContent = "结果已成，正在整理判断。";
       window.setTimeout(showResult, 900);
-    }
-  }, 520);
-}
-
-function autoCast() {
-  if (state.lines.length >= 6) return;
-  state.autoCasting = true;
-  castButton.disabled = true;
-  autoCastButton.disabled = true;
-  throwOneLine();
-  state.autoTimer = window.setInterval(() => {
-    if (state.lines.length >= 6) {
-      window.clearInterval(state.autoTimer);
       return;
     }
-    throwOneLine();
-  }, 780);
+    const left = 6 - state.lines.length;
+    castHint.textContent = `第 ${state.lines.length} 次已落，还剩 ${left} 次。等你觉得该落了，再抛下一次。`;
+  }, 520);
 }
 
 function createLine() {
@@ -327,7 +311,7 @@ function updateLineState() {
     row.classList.toggle("is-moving", line?.moving || false);
     row.querySelector(".yao-mark").textContent = line ? line.label : "待摇";
   });
-  castTitle.textContent = state.lines.length >= 6 ? "结果成形" : `第 ${state.lines.length + 1} 次`;
+  castTitle.textContent = state.lines.length >= 6 ? "结果成形" : `已抛 ${state.lines.length} / 6`;
 }
 
 function showResult() {
