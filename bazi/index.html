@@ -46,6 +46,7 @@ body {
     linear-gradient(90deg, rgba(6, 14, 16, 0.5), transparent 22%, transparent 78%, rgba(42, 86, 80, 0.26)),
     linear-gradient(180deg, #0f1a1d 0, #20333a 15%, #d5dcd3 38%, #eeeade 100%);
   overflow-x: hidden;
+  transition: opacity 220ms var(--deal), filter 220ms var(--deal), transform 220ms var(--deal);
 }
 
 body::before,
@@ -55,6 +56,12 @@ body::after {
   z-index: -3;
   pointer-events: none;
   content: "";
+}
+
+body.is-leaving {
+  opacity: 0;
+  filter: blur(8px);
+  transform: scale(0.985);
 }
 
 body::before {
@@ -5378,6 +5385,8 @@ body.stage-result .result-panel::after {
 .result-ritual-stage {
   position: relative;
   min-height: min(720px, calc(100svh - 286px));
+  overflow: hidden;
+  perspective: 1100px;
   touch-action: pan-y;
   isolation: isolate;
 }
@@ -5517,15 +5526,51 @@ body.stage-result .result-panel::after {
 }
 
 .result-deck.turn-next .result-ritual-stage .report-section.is-current {
-  animation: ritualSwapNext 320ms cubic-bezier(0.2, 0.78, 0.2, 1) both;
+  animation: ritualSwapNext 460ms cubic-bezier(0.16, 0.84, 0.2, 1) both;
 }
 
 .result-deck.turn-prev .result-ritual-stage .report-section.is-current {
-  animation: ritualSwapPrev 320ms cubic-bezier(0.2, 0.78, 0.2, 1) both;
+  animation: ritualSwapPrev 460ms cubic-bezier(0.16, 0.84, 0.2, 1) both;
+}
+
+.result-ritual-stage .report-section.is-exiting {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  min-height: 100%;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.result-ritual-stage .report-section.exit-next {
+  animation: ritualExitNext 460ms cubic-bezier(0.28, 0.04, 0.18, 1) both;
+}
+
+.result-ritual-stage .report-section.exit-prev {
+  animation: ritualExitPrev 460ms cubic-bezier(0.28, 0.04, 0.18, 1) both;
 }
 
 .result-ritual-stage .report-section.is-swiping {
   will-change: transform;
+}
+
+.result-deck.is-dragging .ritual-aura {
+  transform: translateX(calc(var(--swipe-x, 0px) * 0.1));
+  transition: none;
+}
+
+.result-deck.is-dragging .ritual-rail {
+  opacity: calc(0.62 + var(--swipe-progress, 0) * 0.24);
+  transform: translateX(calc(var(--swipe-x, 0px) * 0.08));
+}
+
+.result-deck.is-turning .ritual-rail {
+  animation: railFlash 460ms ease both;
+}
+
+.result-deck.is-turning .result-gate-nav {
+  animation: gateNavPulse 460ms ease both;
 }
 
 .result-ritual-stage .report-scene {
@@ -6002,23 +6047,80 @@ body.stage-result .result-panel::after {
 
 @keyframes ritualSwapNext {
   from {
-    opacity: 0.99;
-    transform: translateX(28px) translateY(2px) scale(0.997);
+    opacity: 0.72;
+    transform: translate3d(64px, 8px, 0) rotateY(-8deg) scale(0.972);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-5px, 0, 0) rotateY(1deg) scale(1.004);
   }
   to {
     opacity: 1;
-    transform: translateX(0) translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
   }
 }
 
 @keyframes ritualSwapPrev {
   from {
-    opacity: 0.99;
-    transform: translateX(-28px) translateY(2px) scale(0.997);
+    opacity: 0.72;
+    transform: translate3d(-64px, 8px, 0) rotateY(8deg) scale(0.972);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(5px, 0, 0) rotateY(-1deg) scale(1.004);
   }
   to {
     opacity: 1;
-    transform: translateX(0) translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
+  }
+}
+
+@keyframes ritualExitNext {
+  from {
+    opacity: 0.96;
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(-72px, -6px, 0) rotateY(9deg) scale(0.975);
+  }
+}
+
+@keyframes ritualExitPrev {
+  from {
+    opacity: 0.96;
+    transform: translate3d(0, 0, 0) rotateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(72px, -6px, 0) rotateY(-9deg) scale(0.975);
+  }
+}
+
+@keyframes railFlash {
+  0% {
+    opacity: 0.55;
+    transform: scaleX(0.72);
+  }
+  48% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0.62;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes gateNavPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    border-color: rgba(232, 218, 178, 0.18);
+  }
+  48% {
+    transform: translateY(-2px);
+    border-color: rgba(232, 218, 178, 0.42);
   }
 }
 
@@ -6621,10 +6723,81 @@ body.stage-result .result-panel::after {
   }
 }
 
+/* Shared product navigation for the multi-tool site shell. */
+.product-nav {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 80;
+  display: grid;
+  width: min(360px, calc(100% - 28px));
+  min-height: 42px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  color: rgba(244, 241, 232, 0.86);
+  background: rgba(8, 17, 19, 0.66);
+  border: 1px solid rgba(238, 234, 223, 0.18);
+  border-radius: 999px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+}
+
+.product-nav a {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.product-nav a.is-active {
+  color: #17201f;
+  background: linear-gradient(145deg, #f5e5bc, #d2a15f);
+}
+
+.product-nav ~ .page {
+  padding-top: 78px;
+}
+
+body.stage-casting .product-nav,
+body.stage-result .product-nav {
+  top: max(8px, env(safe-area-inset-top));
+  opacity: 0.98;
+  background: rgba(8, 17, 19, 0.84);
+  transform: translateX(-50%) scale(0.94);
+  transform-origin: top center;
+}
+
+body.stage-casting .product-nav ~ .page,
+body.stage-result .product-nav ~ .page {
+  padding-top: 0;
+}
+
+@media (max-width: 660px) {
+  body.stage-result .product-nav ~ .page .result-panel {
+    padding-top: 58px;
+  }
+
+  body.stage-result .product-nav ~ .page .result-deck {
+    min-height: calc(100svh - 74px);
+  }
+}
+
 </style>
 </head>
 <body class="stage-input">
   <canvas id="starCanvas" aria-hidden="true"></canvas>
+  <nav class="product-nav" aria-label="MingLi 功能导航">
+    <a href="../index.html">首页</a>
+    <a class="is-active" href="./index.html">八字</a>
+    <a href="../liuyao/index.html">小六爻</a>
+  </nav>
   <main class="page">
     <section class="hero" aria-label="MingLi 命理卡牌">
       <div class="hero-copy">
@@ -7169,6 +7342,7 @@ const wizardState = {
 };
 let readingTimers = [];
 let resultRevealTimers = [];
+let resultTurnTimer = 0;
 
 initControls();
 drawStarField();
@@ -8843,6 +9017,10 @@ function bindReportSwipe(deck, frame) {
     startTime = Date.now();
     tracking = true;
     activeSection = getReportSections(deck)[getReportPage(deck)];
+    deck.classList.add("is-dragging");
+    deck.classList.remove("swipe-left", "swipe-right");
+    deck.style.setProperty("--swipe-x", "0px");
+    deck.style.setProperty("--swipe-progress", "0");
     activeSection?.classList.add("is-swiping");
   }
 
@@ -8852,15 +9030,23 @@ function bindReportSwipe(deck, frame) {
     const dy = y - startY;
     if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.2) {
       event?.preventDefault?.();
-      const limited = Math.max(-64, Math.min(64, dx * 0.32));
+      const limited = Math.max(-86, Math.min(86, dx * 0.42));
+      const progress = Math.min(1, Math.abs(dx) / 150);
+      deck.classList.toggle("swipe-left", dx < 0);
+      deck.classList.toggle("swipe-right", dx > 0);
+      deck.style.setProperty("--swipe-x", `${limited}px`);
+      deck.style.setProperty("--swipe-progress", progress.toFixed(3));
       if (activeSection) {
         activeSection.style.transition = "none";
-        activeSection.style.transform = `translateX(${limited}px) scale(0.997)`;
+        activeSection.style.transform = `translate3d(${limited}px, 0, 0) rotateY(${limited * -0.045}deg) scale(${1 - progress * 0.018})`;
       }
     }
   }
 
   function clearSwipe() {
+    deck.classList.remove("is-dragging", "swipe-left", "swipe-right");
+    deck.style.removeProperty("--swipe-x");
+    deck.style.removeProperty("--swipe-progress");
     if (!activeSection) return;
     activeSection.classList.remove("is-swiping");
     activeSection.style.transition = "transform 180ms ease-out";
@@ -8878,8 +9064,19 @@ function bindReportSwipe(deck, frame) {
     const dy = y - startY;
     const elapsed = Date.now() - startTime;
     const shouldTurn = Math.abs(dx) >= 46 && Math.abs(dx) >= Math.abs(dy) * 1.08 && elapsed <= 1000;
-    clearSwipe();
-    if (!shouldTurn) return;
+    if (!shouldTurn) {
+      clearSwipe();
+      return;
+    }
+    deck.classList.remove("is-dragging", "swipe-left", "swipe-right");
+    deck.style.removeProperty("--swipe-x");
+    deck.style.removeProperty("--swipe-progress");
+    if (activeSection) {
+      activeSection.classList.remove("is-swiping");
+      activeSection.style.transition = "";
+      activeSection.style.transform = "";
+      activeSection = null;
+    }
     deck.classList.add("has-swiped");
     setReportPage(deck, getReportPage(deck) + (dx < 0 ? 1 : -1), true);
   }
@@ -8943,10 +9140,24 @@ function setReportPage(deck, nextIndex, userDriven = false) {
   const page = Math.max(0, Math.min(nextIndex, sections.length - 1));
   const activeStar = getStarIndexForSection(page, sections.length, stars.length);
   const direction = page > previous ? "next" : page < previous ? "prev" : "still";
-  deck.classList.remove("turn-next", "turn-prev");
+  if (resultTurnTimer) window.clearTimeout(resultTurnTimer);
+  sections.forEach((section) => {
+    section.classList.remove("is-exiting", "exit-next", "exit-prev");
+    section.removeAttribute("aria-hidden");
+  });
+  deck.classList.remove("is-turning", "turn-next", "turn-prev");
   if (direction !== "still") {
-    deck.classList.add(`turn-${direction}`);
-    window.setTimeout(() => deck.classList.remove("turn-next", "turn-prev"), 700);
+    const exitingSection = sections[previous];
+    exitingSection?.classList.add("is-exiting", `exit-${direction}`);
+    exitingSection?.setAttribute("aria-hidden", "true");
+    deck.classList.add("is-turning", `turn-${direction}`);
+    resultTurnTimer = window.setTimeout(() => {
+      deck.classList.remove("is-turning", "turn-next", "turn-prev");
+      sections.forEach((section) => {
+        section.classList.remove("is-exiting", "exit-next", "exit-prev");
+        section.removeAttribute("aria-hidden");
+      });
+    }, 620);
   }
   deck.dataset.page = String(page);
   sections.forEach((section, index) => {
@@ -9103,6 +9314,46 @@ function drawStarField() {
     context.fill();
   }
 }
+
+</script>
+  <script>
+(function () {
+  const routeSelector = "a[href]:not([target]):not([download])";
+  const canAnimate = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.documentElement.classList.add("route-ready");
+
+  window.addEventListener("pageshow", () => {
+    document.body.classList.remove("is-leaving");
+  });
+
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest(routeSelector);
+    if (!link || event.defaultPrevented) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const target = new URL(link.href, window.location.href);
+    const current = new URL(window.location.href);
+    if (target.href === current.href) {
+      event.preventDefault();
+      return;
+    }
+    if (target.hash && target.pathname === current.pathname) return;
+    if (target.protocol !== current.protocol) return;
+    if (target.origin !== current.origin) return;
+
+    event.preventDefault();
+    if (!canAnimate) {
+      window.location.href = target.href;
+      return;
+    }
+
+    document.body.classList.add("is-leaving");
+    window.setTimeout(() => {
+      window.location.href = target.href;
+    }, 220);
+  });
+})();
 
 </script>
 </body>
