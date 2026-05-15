@@ -3,320 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MingLi 命理卡牌</title>
-  <link rel="stylesheet" href="./styles.css">
+  <title>MingLi 命理阁</title>
+  <link rel="stylesheet" href="./home.css">
 </head>
-<body class="stage-input">
-  <canvas id="starCanvas" aria-hidden="true"></canvas>
-  <main class="page">
-    <section class="hero" aria-label="MingLi 命理卡牌">
+<body>
+  <main class="home-shell" aria-label="MingLi 主界面">
+    <header class="home-top">
+      <a class="brand" href="./index.html" aria-label="MingLi 首页">
+        <span>命</span>
+        <strong>MingLi</strong>
+      </a>
+      <p>命理阁</p>
+    </header>
+
+    <section class="gate-hero" aria-label="功能选择">
       <div class="hero-copy">
-        <span class="seal">命理</span>
-        <div>
-          <p class="eyebrow">低门槛起盘 · 翻卡填写 · 专业版可选</p>
-          <h1>MingLi</h1>
-          <p class="hero-text">默认只填年月日、出生时段和称呼；专业版追加城市、经度、真太阳时和流派校准，流程动画保持一致。</p>
-        </div>
+        <p class="eyebrow">玄学工具台</p>
+        <h1>择一门入局</h1>
       </div>
-      <div class="tarot-stage" id="tarotStage" aria-hidden="true">
-        <div class="tarot-card card-a">
-          <span class="card-face">生</span>
-          <span class="card-back">✦</span>
-        </div>
-        <div class="tarot-card card-b">
-          <span class="card-face">辰</span>
-          <span class="card-back">✦</span>
-        </div>
-        <div class="tarot-card card-c">
-          <span class="card-face">命</span>
-          <span class="card-back">✦</span>
-        </div>
-      </div>
-    </section>
 
-    <section class="workbench" aria-label="八字精算工作台">
-      <form class="panel form-panel" id="birthForm" novalidate aria-label="生辰卡牌填写">
-        <div class="panel-title">
-          <div>
-            <p class="eyebrow" id="modeEyebrow">普通用户模式</p>
-            <h2 id="questionTitle">先填你记得的</h2>
-          </div>
-          <span class="badge">本地计算</span>
-        </div>
+      <div class="tool-gates">
+        <a class="tool-gate gate-bazi" href="./bazi/index.html" aria-label="进入本命八字">
+          <span class="gate-seal">八字</span>
+          <span class="gate-visual bazi-visual" aria-hidden="true">
+            <b></b><b></b><b></b><b></b>
+          </span>
+          <strong>本命八字</strong>
+          <em>生辰命盘</em>
+          <i aria-hidden="true"></i>
+        </a>
 
-        <button class="pro-toggle" type="button" id="modeToggle" aria-pressed="false">切到专业版</button>
-
-        <input id="useExactTime" type="checkbox" hidden>
-        <input id="showTermDetails" type="checkbox" hidden>
-        <details class="advanced-box" id="advancedBox" hidden></details>
-
-        <div class="card-progress" aria-live="polite">
-          <span id="cardProgressText">第 1 张 / 共 5 张</span>
-          <div class="progress-track" aria-hidden="true"><span id="cardProgressBar"></span></div>
-        </div>
-
-        <div class="question-deck" id="questionDeck">
-          <article class="question-card" data-field="year">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">第一张</span>
-            <h3>出生年份</h3>
-            <p>先给命盘一个年份锚点。</p>
-            <label class="field">
-              <span>出生年份</span>
-              <input id="birthYear" name="year" type="number" inputmode="numeric" min="1900" max="2100" placeholder="1996" required>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="month">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">第二张</span>
-            <h3>出生月份</h3>
-            <p>月份会影响节令与月柱。</p>
-            <label class="field">
-              <span>出生月份</span>
-              <select id="birthMonth" name="month" required>
-                <option value="">选择月份</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="day">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">第三张</span>
-            <h3>出生日期</h3>
-            <p>日期用于推日柱和日主。</p>
-            <label class="field">
-              <span>出生日期</span>
-              <input id="birthDay" name="day" type="number" inputmode="numeric" min="1" max="31" placeholder="18" required>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="period">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">第四张</span>
-            <h3>大概出生时段</h3>
-            <p>不知道具体时间也可以继续，时柱会标出可信度。</p>
-            <label class="field">
-              <span>大概出生时段</span>
-              <select id="birthPeriod" name="period">
-                <option value="unknown">不确定，只按年月日先看</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="name">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">第五张</span>
-            <h3>称呼</h3>
-            <p>只用于结果页标题，不会离开本地页面。</p>
-            <label class="field">
-              <span>称呼</span>
-              <input id="displayName" name="displayName" type="text" maxlength="16" placeholder="例如：来客" required>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="concern">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">第六张</span>
-            <h3>这次想问</h3>
-            <p>先看你最在意的部分，其他签也会完整保留。</p>
-            <label class="field">
-              <span>本次重点</span>
-              <select id="mainConcern" name="concern">
-                <option value="overview">先看整体</option>
-                <option value="future">未来运势</option>
-                <option value="wealth">财富事业</option>
-                <option value="relationship">姻缘关系</option>
-                <option value="remedy">怎么改运</option>
-                <option value="oracle">抽一段签文</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="hour">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>具体小时</h3>
-            <p>专业版会用具体小时分钟替代宽泛时段。</p>
-            <label class="field">
-              <span>具体小时</span>
-              <select id="birthHour" name="hour">
-                <option value="">选择小时</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="minute">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>具体分钟</h3>
-            <p>分钟会参与真太阳时与换日判断。</p>
-            <label class="field">
-              <span>具体分钟</span>
-              <input id="birthMinute" name="minute" type="number" inputmode="numeric" min="0" max="59" placeholder="00">
-            </label>
-          </article>
-
-          <article class="question-card" data-field="city">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>出生城市</h3>
-            <p>选择城市会自动带出经度和时区。</p>
-            <label class="field">
-              <span>出生地</span>
-              <select id="cityPreset" name="cityPreset">
-                <option value="custom">自定义经度</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="longitude">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>出生地经度</h3>
-            <p>用于位置校准，城市不在列表时可手动改。</p>
-            <label class="field">
-              <span>经度</span>
-              <input id="longitude" name="longitude" type="number" inputmode="decimal" min="-180" max="180" step="0.0001" placeholder="116.4074">
-            </label>
-          </article>
-
-          <article class="question-card" data-field="timezone">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>出生地时区</h3>
-            <p>默认按中国标准时间，也可切换海外时区。</p>
-            <label class="field">
-              <span>时区</span>
-              <select id="timeZone" name="timeZone">
-                <option value="8">UTC+8 中国标准时间</option>
-                <option value="7">UTC+7</option>
-                <option value="9">UTC+9</option>
-                <option value="0">UTC+0</option>
-                <option value="-4">UTC-4</option>
-                <option value="-5">UTC-5</option>
-                <option value="-7">UTC-7</option>
-                <option value="-8">UTC-8</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="useTrueSolarTime">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>真太阳时</h3>
-            <p>开启后会把经度修正和时差方程纳入排盘。</p>
-            <label class="field">
-              <span>位置校准</span>
-              <select id="useTrueSolarTime">
-                <option value="false">不校正出生地经度</option>
-                <option value="true">按经度校正真太阳时</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="yearBoundary">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>年柱流派</h3>
-            <p>不同流派对年柱分界会有不同口径。</p>
-            <label class="field">
-              <span>年份分界</span>
-              <select id="yearBoundary">
-                <option value="lichun">默认：立春后算新年</option>
-                <option value="dongzhi">冬至后算新年</option>
-                <option value="calendar">按公历年份</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="question-card" data-field="dayBoundary">
-            <span class="card-mark" aria-hidden="true"></span>
-            <span class="step-kicker">专业校准</span>
-            <h3>日柱换日</h3>
-            <p>选择子初或正子换日口径。</p>
-            <label class="field">
-              <span>日期分界</span>
-              <select id="dayBoundary">
-                <option value="zi">默认：23点后算次日</option>
-                <option value="midnight">0点后算次日</option>
-              </select>
-            </label>
-          </article>
-        </div>
-
-        <div class="actions">
-          <button class="btn secondary prev-card" type="button" id="prevCard">上一张</button>
-          <button class="btn secondary" type="button" id="sampleButton">示例</button>
-          <button class="btn primary" type="submit">下一张</button>
-        </div>
-
-        <p class="form-note">普通版默认按中国标准时间和常用排盘规则计算；专业版会显示真太阳时、节令边界和流派差异。</p>
-        <p class="error" id="formError" role="alert"></p>
-      </form>
-
-      <div class="reading-column">
-        <section class="panel chart-panel" aria-label="命盘">
-          <div class="chart-head">
-            <div>
-              <p class="eyebrow">命盘待摇</p>
-              <h2 id="plateTitle">等待起盘</h2>
-              <p id="plateSubtitle">填完卡牌后，命脉图会先旋起，再展开一页页结果卡。</p>
-            </div>
-            <span class="badge badge-red" id="zodiacBadge">未计算</span>
-          </div>
-
-          <div class="cast-steps" id="castSteps" aria-live="polite">
-            <span class="cast-step active">收盘</span>
-            <span class="cast-step">定时</span>
-            <span class="cast-step">排柱</span>
-            <span class="cast-step">五行</span>
-            <span class="cast-step">大纲</span>
-          </div>
-
-          <div class="chart-body">
-            <div class="astrolabe" aria-hidden="true">
-              <div class="plate-spin-layer"></div>
-              <div class="compass-line vertical"></div>
-              <div class="compass-line horizontal"></div>
-              <div class="plate-center">
-                <strong id="centerStem">--</strong>
-                <span>日主</span>
-              </div>
-              <div class="ring-item year"><b id="yearRing">--</b><span>年</span></div>
-              <div class="ring-item month"><b id="monthRing">--</b><span>月</span></div>
-              <div class="ring-item day"><b id="dayRing">--</b><span>日</span></div>
-              <div class="ring-item hour"><b id="hourRing">--</b><span>时</span></div>
-            </div>
-
-            <div class="quick-facts popup-stack" id="quickFacts">
-              <div class="fact">
-                <span class="fact-key">校时</span>
-                <span class="fact-value">等待出生地</span>
-              </div>
-              <div class="fact">
-                <span class="fact-key">节令</span>
-                <span class="fact-value">等待推算</span>
-              </div>
-              <div class="fact">
-                <span class="fact-key">日主</span>
-                <span class="fact-value">尚未生成</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel result-panel" id="resultPanel" aria-live="polite">
-          <div class="empty-state">
-            <p class="eyebrow">静候生辰</p>
-            <h2>命盘未开，先填出生年月日时。</h2>
-            <p>起盘后会给出四柱、节气边界、真太阳时校正、五行权重、日主旺衰和签文式建议。</p>
-          </div>
-        </section>
+        <a class="tool-gate gate-liuyao" href="./liuyao/index.html" aria-label="进入小六爻">
+          <span class="gate-seal">六爻</span>
+          <span class="gate-visual liuyao-visual" aria-hidden="true">
+            <b></b><b></b><b></b><b></b><b></b><b></b>
+          </span>
+          <strong>小六爻</strong>
+          <em>一事成卦</em>
+          <i aria-hidden="true"></i>
+        </a>
       </div>
     </section>
+
+    <nav class="bottom-route" aria-label="快速进入">
+      <a href="./bazi/index.html">八字</a>
+      <a href="./liuyao/index.html">小六爻</a>
+    </nav>
   </main>
-
-  <script src="./app.js"></script>
+  <script src="./route.js"></script>
 </body>
 </html>

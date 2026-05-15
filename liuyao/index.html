@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MingLi 小六爻</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-stage="entry">
+  <div class="oracle-ambient" aria-hidden="true">
+    <span class="ambient-ring"></span>
+    <span class="ambient-coin coin-one"></span>
+    <span class="ambient-coin coin-two"></span>
+    <span class="ambient-line line-one"></span>
+    <span class="ambient-line line-two"></span>
+  </div>
+
+  <nav class="product-nav oracle-product-nav" aria-label="MingLi 功能导航">
+    <a href="../index.html">首页</a>
+    <a href="../bazi/index.html">八字</a>
+    <a class="is-active" href="./index.html">小六爻</a>
+  </nav>
+
+  <main class="oracle-shell">
+    <header class="site-top">
+      <a class="brand" href="../index.html" aria-label="返回 MingLi 命理阁">
+        <span>命</span>
+        <strong>MingLi</strong>
+      </a>
+      <span class="switch-link">一事成卦</span>
+    </header>
+
+    <section class="stage stage-entry is-active" id="entryStage" aria-label="起卦输入">
+      <div class="hero-panel">
+        <p class="eyebrow">小六爻</p>
+        <h1>一事成卦</h1>
+        <p class="hero-line">心中默念一件事，静一静，直接起卦。</p>
+        <div class="ritual-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <form class="question-panel" id="oracleForm">
+        <div class="direct-cast">
+          <span>默念所问</span>
+          <strong>不必先写出来</strong>
+          <p>先让卦象出来，再看它像什么、提醒什么、哪里会顺、哪里会卡。</p>
+          <button class="primary-action" type="submit">默念后直接起卦</button>
+        </div>
+
+        <details class="optional-question">
+          <summary>也可以补充所问之事</summary>
+
+          <label class="field">
+            <span>所问之事</span>
+            <textarea id="questionInput" rows="3" maxlength="96" placeholder="可不填。若想记录，可写：这件事能不能成？"></textarea>
+          </label>
+
+          <div class="templates" aria-label="常见问法">
+            <button type="button" data-topic="choice" data-template="这件事现在该推进、等待，还是换一种做法？">进退</button>
+            <button type="button" data-topic="relationship" data-template="我和这个人的关系接下来会不会有实质变化？">感情</button>
+            <button type="button" data-topic="career" data-template="这个工作机会对我来说值不值得接？">事业</button>
+            <button type="button" data-topic="wealth" data-template="这笔钱、回款或收入机会近期能不能落地？">财物</button>
+            <button type="button" data-topic="document" data-template="这份申请、合同、证件或手续能不能顺利办成？">文书</button>
+            <button type="button" data-topic="message" data-template="我等的消息、回复或通知近期会不会来？">消息</button>
+            <button type="button" data-topic="travel" data-template="这次出行、搬动或见面安排是否合适？">出行</button>
+            <button type="button" data-topic="lost" data-template="这个丢失的东西还有没有机会找回？">失物</button>
+          </div>
+
+          <fieldset class="topic-grid topic-scroll">
+            <legend>大概是哪类事</legend>
+            <div class="topic-options">
+              <label><input type="radio" name="topic" value="general" checked><span>综合</span></label>
+              <label><input type="radio" name="topic" value="choice"><span>进退选择</span></label>
+              <label><input type="radio" name="topic" value="relationship"><span>感情</span></label>
+              <label><input type="radio" name="topic" value="career"><span>事业工作</span></label>
+              <label><input type="radio" name="topic" value="wealth"><span>财物回款</span></label>
+              <label><input type="radio" name="topic" value="study"><span>学业考试</span></label>
+              <label><input type="radio" name="topic" value="document"><span>文书手续</span></label>
+              <label><input type="radio" name="topic" value="message"><span>消息等待</span></label>
+              <label><input type="radio" name="topic" value="travel"><span>出行迁动</span></label>
+              <label><input type="radio" name="topic" value="lost"><span>失物寻找</span></label>
+              <label><input type="radio" name="topic" value="cooperation"><span>合作交易</span></label>
+              <label><input type="radio" name="topic" value="family"><span>家宅人事</span></label>
+              <label><input type="radio" name="topic" value="wellbeing"><span>身心状态</span></label>
+              <label><input type="radio" name="topic" value="timing"><span>近期走势</span></label>
+              <label><input type="radio" name="topic" value="other"><span>其他</span></label>
+            </div>
+          </fieldset>
+        </details>
+      </form>
+    </section>
+
+    <section class="stage stage-cast" id="castStage" aria-label="摇卦">
+      <div class="cast-head">
+        <p class="eyebrow">铜钱落位</p>
+        <h2 id="castTitle">第 1 次</h2>
+        <p id="castHint">轻点铜钱，连续摇 6 次生成结果。</p>
+      </div>
+
+      <div class="cast-board">
+        <div class="hexagram-lines" id="hexagramLines" aria-label="结果线"></div>
+        <div class="coin-tray" id="coinTray" aria-hidden="true">
+          <span class="coin coin-a">正</span>
+          <span class="coin coin-b">反</span>
+          <span class="coin coin-c">变</span>
+        </div>
+        <div class="term-stream" id="termStream" aria-hidden="true">
+          <span>念起一事</span>
+          <span>铜钱落位</span>
+          <span>线条成形</span>
+          <span>开始判断</span>
+        </div>
+      </div>
+
+      <div class="cast-actions">
+        <button class="secondary-action" type="button" id="autoCastButton">直接起卦</button>
+        <button class="primary-action" type="button" id="castButton">摇一次</button>
+      </div>
+    </section>
+
+    <section class="stage stage-result" id="resultStage" aria-label="解读结果">
+      <div class="result-frame" id="resultFrame">
+        <div class="result-rail" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="result-head">
+          <div>
+            <p class="eyebrow" id="resultTopic">问事</p>
+            <h2 id="resultTitle">结果已出</h2>
+          </div>
+          <span id="resultCount">1 / 7</span>
+        </div>
+        <div class="mini-hexagram" id="miniHexagram" aria-label="六条结果线"></div>
+
+        <div class="sign-stage" id="signStage" aria-live="polite"></div>
+
+        <div class="swipe-cue" aria-hidden="true">
+          <span></span>
+        </div>
+
+        <div class="sign-nav" aria-label="切换签牌">
+          <button type="button" id="prevSign">上一签</button>
+          <div>
+            <strong id="signName">这卦像什么</strong>
+            <em id="signHint">左滑看下一签</em>
+          </div>
+          <button type="button" id="nextSign">下一签</button>
+        </div>
+      </div>
+
+      <div class="again-row">
+        <button class="secondary-action" type="button" id="restartButton">再问一事</button>
+        <a class="secondary-link" href="../bazi/index.html">回本命八字</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+  <script src="../route.js"></script>
+</body>
+</html>
